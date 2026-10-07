@@ -16,9 +16,9 @@ import kotlinx.coroutines.launch
 import pe.edu.upc.predictivemaintain.app.core.network.AccessTokenProvider
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.AccessToken
-import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.TenantId
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.UserId
+import pe.edu.upc.predictivemaintain.app.iam.infrastructure.mapper.AuthMapper
 import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.util.concurrent.atomic.AtomicReference
@@ -47,9 +47,11 @@ class SessionDataStore @Inject constructor(
     private val cachedAccessToken = AtomicReference<String?>(null)
 
     init {
+        // 1. Filled when the stored session is first read from disk
         CoroutineScope(Dispatchers.IO).launch {
             context.dataStore.data.collect { prefs ->
-                cachedAccessToken.set(prefs[KEY_ACCESS_TOKEN])
+                val token = prefs[KEY_ACCESS_TOKEN]
+                cachedAccessToken.set(token)
             }
         }
     }
@@ -60,31 +62,45 @@ class SessionDataStore @Inject constructor(
 
     fun observeSession(): Flow<AuthSession?> {
         return context.dataStore.data.map { prefs ->
-            val token = prefs[KEY_ACCESS_TOKEN] ?: return@map null
-            val expiresAtStr = prefs[KEY_EXPIRES_AT] ?: return@map null
-            val userId = prefs[KEY_USER_ID] ?: return@map null
-            val tenantId = prefs[KEY_TENANT_ID] ?: return@map null
-            val rolesStr = prefs[KEY_ROLES] ?: return@map null
+            val token = prefs[KEY_ACCESS_TOKEN]
+            cachedAccessToken.set(token) // also update cache on read
 
-            if (rolesStr.isBlank()) return@map null
+            if (token == null) return@map null
+            val expiresAtStr = prefs[KEY_EXPIRES_AT] ?: return@map clearAndReturnNull()
+            val userId = prefs[KEY_USER_ID] ?: return@map clearAndReturnNull()
+            val tenantId = prefs[KEY_TENANT_ID] ?: return@map clearAndReturnNull()
+            val rolesStr = prefs[KEY_ROLES] ?: return@map clearAndReturnNull()
 
             try {
-                val roles = rolesStr.split(",").map { roleName -> Role.fromString(roleName) }
-                if (roles.isEmpty()) return@map null
+                // 2. Roles read from disk converted with AuthMapper.parseRoles inside try/catch for IllegalArgumentException only
+                val roleList = rolesStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                val roles = AuthMapper.parseRoles(roleList)
+                val expiresAt = Instant.parse(expiresAtStr)
 
                 AuthSession(
                     userId = UserId(userId),
                     tenantId = TenantId(tenantId),
                     roles = roles,
                     accessToken = AccessToken(token),
-                    expiresAt = Instant.parse(expiresAtStr)
+                    expiresAt = expiresAt
                 )
             } catch (_: IllegalArgumentException) {
-                null
+                // Corrupt data: treat as no session, clear storage and cache, never throw
+                clearAndReturnNull()
             } catch (_: DateTimeParseException) {
-                null
+                // Unreadable expiry: treat as no session, clear storage and cache, never throw
+                clearAndReturnNull()
             }
         }
+    }
+
+    private suspend fun clearAndReturnNull(): AuthSession? {
+        // 3. Set to null when session is cleared / corrupt
+        cachedAccessToken.set(null)
+        try {
+            context.dataStore.edit { it.clear() }
+        } catch (_: Exception) {}
+        return null
     }
 
     suspend fun currentSession(): AuthSession? {
@@ -92,6 +108,7 @@ class SessionDataStore @Inject constructor(
     }
 
     suspend fun saveSession(session: AuthSession) {
+        // 2. Filled when a session is saved
         cachedAccessToken.set(session.accessToken.value)
         context.dataStore.edit { prefs ->
             prefs[KEY_ACCESS_TOKEN] = session.accessToken.value
@@ -103,6 +120,7 @@ class SessionDataStore @Inject constructor(
     }
 
     suspend fun clearSession() {
+        // 3. Set to null when the session is cleared
         cachedAccessToken.set(null)
         context.dataStore.edit { prefs ->
             prefs.clear()
