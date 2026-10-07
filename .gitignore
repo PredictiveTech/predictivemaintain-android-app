@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# IDE settings: each person has their own (avoids conflicts between IDE versions)
+.idea/
