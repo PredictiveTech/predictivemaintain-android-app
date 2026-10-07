@@ -4,82 +4,144 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import pe.edu.upc.predictivemaintain.app.core.error.AppError
+import pe.edu.upc.predictivemaintain.app.core.error.Outcome
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.AccessToken
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.DisplayName
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Email
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
-import pe.edu.upc.predictivemaintain.app.iam.infrastructure.local.SessionLocalModel
-import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.LoginRequestDto
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.TenantId
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.UserId
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.LoginResponseDto
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UserDto
+import java.time.Instant
 
 class AuthMapperTest {
 
+    private fun loginDto(
+        accessToken: String = "token-123",
+        expiresAt: String = "2026-10-07T18:00:00Z",
+        userId: String = "user-1",
+        tenantId: String = "tenant-1",
+        roles: List<String> = listOf("MAINTENANCE_MANAGER")
+    ) = LoginResponseDto(
+        accessToken = accessToken, tokenType = "Bearer", expiresAt = expiresAt,
+        userId = userId, tenantId = tenantId, roles = roles
+    )
+
+    private fun userDto(
+        id: String = "user-1",
+        tenantId: String = "tenant-1",
+        email: String = "jefe.demo@example.com",
+        displayName: String = "Jefe Demo",
+        active: Boolean = true,
+        roles: List<String> = listOf("TECHNICIAN")
+    ) = UserDto(
+        id = id, tenantId = tenantId, email = email, displayName = displayName,
+        active = active, roles = roles
+    )
+
+    private fun assertInvalid(field: String, outcome: Outcome<*>) {
+        assertTrue("expected a Failure but got $outcome", outcome is Outcome.Failure)
+        assertEquals(AppError.InvalidResponse(field), (outcome as Outcome.Failure).error)
+    }
+
+    // ---- login response -> AuthSession
+
     @Test
-    fun `map LoginResponseDto to AuthSession domain entity`() {
-        val dto = LoginResponseDto(
-            accessToken = "secret-access-token-123",
-            tokenType = "Bearer",
-            expiresAt = "2026-03-01T15:00:00Z",
-            userId = "user-123",
-            tenantId = "tenant-456",
-            roles = listOf("MAINTENANCE_MANAGER", "TECHNICIAN")
-        )
+    fun validLoginResponseBecomesSession() {
+        val outcome = AuthMapper.toDomain(loginDto())
 
-        val session = AuthMapper.toDomain(dto)
-
-        assertEquals("user-123", session.userId.value)
-        assertEquals("tenant-456", session.tenantId.value)
-        assertEquals("secret-access-token-123", session.accessToken.value)
-        assertEquals(2, session.roles.size)
-        assertTrue(session.roles.contains(Role.MAINTENANCE_MANAGER))
-        assertTrue(session.roles.contains(Role.TECHNICIAN))
+        assertTrue("expected a Success but got $outcome", outcome is Outcome.Success)
+        val session = (outcome as Outcome.Success).data
+        assertEquals(UserId("user-1"), session.userId)
+        assertEquals(TenantId("tenant-1"), session.tenantId)
+        assertEquals(listOf(Role.MAINTENANCE_MANAGER), session.roles)
+        assertEquals(AccessToken("token-123"), session.accessToken)
+        assertEquals(Instant.parse("2026-10-07T18:00:00Z"), session.expiresAt)
     }
 
     @Test
-    fun `map UserDto to UserProfile domain entity`() {
-        val dto = UserDto(
-            id = "user-789",
-            tenantId = "tenant-456",
-            email = "tech@plant.com",
-            displayName = "Jane Doe",
-            active = true,
-            roles = listOf("OPERATOR")
-        )
+    fun unknownRoleRejectsTheWholeResponseInsteadOfDroppingIt() {
+        assertInvalid("roles", AuthMapper.toDomain(loginDto(roles = listOf("MAINTENANCE_MANAGER", "SUPERUSER"))))
+    }
 
-        val profile = AuthMapper.toDomain(dto)
+    @Test
+    fun emptyRoleListIsRejected() {
+        assertInvalid("roles", AuthMapper.toDomain(loginDto(roles = emptyList())))
+    }
 
-        assertEquals("user-789", profile.id.value)
-        assertEquals("tenant-456", profile.tenantId.value)
-        assertEquals("tech@plant.com", profile.email.value)
-        assertEquals("Jane Doe", profile.displayName.value)
+    @Test
+    fun roleNamesAreMatchedIgnoringCase() {
+        val outcome = AuthMapper.toDomain(loginDto(roles = listOf("technician")))
+
+        assertTrue(outcome is Outcome.Success)
+        assertEquals(listOf(Role.TECHNICIAN), (outcome as Outcome.Success).data.roles)
+    }
+
+    @Test
+    fun malformedExpirationIsRejectedAndNeverInvented() {
+        assertInvalid("expiresAt", AuthMapper.toDomain(loginDto(expiresAt = "not-a-date")))
+        assertInvalid("expiresAt", AuthMapper.toDomain(loginDto(expiresAt = "")))
+        assertInvalid("expiresAt", AuthMapper.toDomain(loginDto(expiresAt = "2026-10-07 18:00:00")))
+    }
+
+    @Test
+    fun blankIdsAndTokenAreRejected() {
+        assertInvalid("userId", AuthMapper.toDomain(loginDto(userId = " ")))
+        assertInvalid("tenantId", AuthMapper.toDomain(loginDto(tenantId = "")))
+        assertInvalid("accessToken", AuthMapper.toDomain(loginDto(accessToken = "  ")))
+    }
+
+    @Test
+    fun loginDtoNeverPrintsTheToken() {
+        val printed = loginDto(accessToken = "super-secret-token").toString()
+
+        assertFalse("the token leaked in toString(): $printed", printed.contains("super-secret-token"))
+    }
+
+    // ---- user response -> UserProfile
+
+    @Test
+    fun validUserBecomesProfileWithTrimmedEmail() {
+        val outcome = AuthMapper.toDomain(userDto(email = "  jefe.demo@example.com "))
+
+        assertTrue("expected a Success but got $outcome", outcome is Outcome.Success)
+        val profile = (outcome as Outcome.Success).data
+        assertEquals(Email("jefe.demo@example.com"), profile.email)
+        assertEquals(DisplayName("Jefe Demo"), profile.displayName)
+        assertEquals(listOf(Role.TECHNICIAN), profile.roles)
         assertTrue(profile.active)
-        assertEquals(1, profile.roles.size)
-        assertEquals(Role.OPERATOR, profile.roles.first())
     }
 
     @Test
-    fun `DTOs and LocalModel toString mask sensitive passwords and tokens`() {
-        val loginReq = LoginRequestDto("user@test.com", "MyRawPassword")
-        assertFalse(loginReq.toString().contains("MyRawPassword"))
-        assertTrue(loginReq.toString().contains("password=***"))
+    fun invalidEmailIsRejected() {
+        assertInvalid("email", AuthMapper.toDomain(userDto(email = "not-an-email")))
+    }
 
-        val loginRes = LoginResponseDto(
-            accessToken = "MySecretJwtToken",
-            tokenType = "Bearer",
-            expiresAt = "2026-03-01T15:00:00Z",
-            userId = "u1",
-            tenantId = "t1",
-            roles = emptyList()
-        )
-        assertFalse(loginRes.toString().contains("MySecretJwtToken"))
-        assertTrue(loginRes.toString().contains("accessToken=***"))
+    @Test
+    fun blankDisplayNameIsRejected() {
+        assertInvalid("displayName", AuthMapper.toDomain(userDto(displayName = "  ")))
+    }
 
-        val localModel = SessionLocalModel(
-            userId = "u1",
-            tenantId = "t1",
-            roles = emptyList(),
-            accessToken = "MyStoredSecretToken",
-            expiresAt = "2026-03-01T15:00:00Z"
+    @Test
+    fun userWithUnknownOrNoRolesIsRejected() {
+        assertInvalid("roles", AuthMapper.toDomain(userDto(roles = listOf("GUEST"))))
+        assertInvalid("roles", AuthMapper.toDomain(userDto(roles = emptyList())))
+    }
+
+    @Test
+    fun parseRolesKeepsTheOrderAndRejectsBadInput() {
+        assertEquals(
+            listOf(Role.OPERATOR, Role.TECHNICIAN),
+            AuthMapper.parseRoles(listOf("OPERATOR", "TECHNICIAN"))
         )
-        assertFalse(localModel.toString().contains("MyStoredSecretToken"))
-        assertTrue(localModel.toString().contains("accessToken=***"))
+        var rejected = false
+        try {
+            AuthMapper.parseRoles(listOf("OPERATOR", "NOPE"))
+        } catch (_: IllegalArgumentException) {
+            rejected = true
+        }
+        assertTrue(rejected)
     }
 }

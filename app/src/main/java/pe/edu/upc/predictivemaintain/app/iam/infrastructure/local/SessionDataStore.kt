@@ -20,6 +20,7 @@ import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.TenantId
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.UserId
 import java.time.Instant
+import java.time.format.DateTimeParseException
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -65,10 +66,12 @@ class SessionDataStore @Inject constructor(
             val tenantId = prefs[KEY_TENANT_ID] ?: return@map null
             val rolesStr = prefs[KEY_ROLES] ?: return@map null
 
+            if (rolesStr.isBlank()) return@map null
+
             try {
-                val roles = rolesStr.split(",").mapNotNull { roleName ->
-                    try { Role.fromString(roleName) } catch (_: Exception) { null }
-                }
+                val roles = rolesStr.split(",").map { roleName -> Role.fromString(roleName) }
+                if (roles.isEmpty()) return@map null
+
                 AuthSession(
                     userId = UserId(userId),
                     tenantId = TenantId(tenantId),
@@ -76,7 +79,9 @@ class SessionDataStore @Inject constructor(
                     accessToken = AccessToken(token),
                     expiresAt = Instant.parse(expiresAtStr)
                 )
-            } catch (_: Exception) {
+            } catch (_: IllegalArgumentException) {
+                null
+            } catch (_: DateTimeParseException) {
                 null
             }
         }

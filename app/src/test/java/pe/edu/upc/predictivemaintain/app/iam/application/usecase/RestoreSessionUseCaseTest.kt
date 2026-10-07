@@ -84,6 +84,26 @@ class RestoreSessionUseCaseTest {
     }
 
     @Test
+    fun `restore session keeps stored session when the server response is invalid`() = runTest {
+        val validSession = AuthSession(
+            userId = UserId("user-1"),
+            tenantId = TenantId("tenant-1"),
+            roles = listOf(Role.OPERATOR),
+            accessToken = AccessToken("valid-token"),
+            expiresAt = now.plusSeconds(1800)
+        )
+        fakeSessionRepository.saveSession(validSession)
+        fakeAuthRepository.fetchProfileResult = Outcome.Failure(AppError.InvalidResponse("roles"))
+
+        val result = restoreSessionUseCase(now)
+
+        assertTrue(result is Outcome.Success)
+        assertEquals(validSession, (result as Outcome.Success).data)
+        assertEquals(validSession, fakeSessionRepository.currentSession())
+    }
+
+
+    @Test
     fun `restore session clears session when stored session is expired`() = runTest {
         val expiredSession = AuthSession(
             userId = UserId("user-1"),

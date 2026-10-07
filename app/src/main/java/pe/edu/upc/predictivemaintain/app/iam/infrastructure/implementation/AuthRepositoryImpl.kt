@@ -23,18 +23,16 @@ class AuthRepositoryImpl @Inject constructor(
             email = email.value,
             password = password.value
         )
-        return safeApiCall(errorParser) {
-            authApiService.login(requestDto)
-        }.map { responseDto ->
-            AuthMapper.toDomain(responseDto)
+        return when (val apiResult = safeApiCall(errorParser) { authApiService.login(requestDto) }) {
+            is Outcome.Success -> AuthMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
         }
     }
 
     override suspend fun fetchProfile(): Outcome<UserProfile> {
-        return safeApiCall(errorParser) {
-            authApiService.getMe()
-        }.map { userDto ->
-            AuthMapper.toDomain(userDto)
+        return when (val apiResult = safeApiCall(errorParser) { authApiService.getMe() }) {
+            is Outcome.Success -> AuthMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
         }
     }
 }

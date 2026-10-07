@@ -39,7 +39,9 @@ class RestoreSessionUseCase @Inject constructor(
                             Outcome.Failure(profileResult.error)
                         }
                     }
-                    is AppError.Network -> {
+                    // The server's answer was unreadable: that does not prove the token is invalid,
+                    // so the stored session is kept, exactly as when there is no network.
+                    is AppError.Network, is AppError.InvalidResponse -> {
                         Outcome.Success(storedSession)
                     }
                     is AppError.Unknown -> {
