@@ -26,6 +26,9 @@ import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.HomeViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.LoginViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.SplashViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
 
 @Composable
 fun AppNavigation(
@@ -108,7 +111,22 @@ fun AppNavigation(
                     }
                 )
             }
-            composable(Screen.Assets.route) { PlaceholderScreen("Assets") }
+            composable(Screen.Assets.route) {
+                val assetsViewModel: AssetsViewModel = hiltViewModel()
+                AssetsScreen(
+                    viewModel = assetsViewModel,
+                    onAssetClick = { assetId ->
+                        navController.navigate(Screen.AssetDetail.createRoute(assetId))
+                    }
+                )
+            }
+            composable("assets/{assetId}") { backStackEntry ->
+                val assetId = backStackEntry.arguments?.getString("assetId") ?: ""
+                AssetDetailScreen(
+                    assetId = assetId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Alerts.route) { PlaceholderScreen("Alerts") }
             composable(Screen.Orders.route) { PlaceholderScreen("Orders") }
             composable(Screen.MyOrders.route) { PlaceholderScreen("My orders") }
