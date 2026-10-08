@@ -24,4 +24,15 @@ interface WorkOrderRepository {
         technicianId: TechnicianId,
         expectedVersion: Long
     ): Outcome<WorkOrder>
+
+    suspend fun startWorkOrder(
+        id: WorkOrderId,
+        expectedVersion: Long
+    ): Outcome<WorkOrder>
+
+    suspend fun completeWorkOrder(
+        id: WorkOrderId,
+        summary: String,
+        expectedVersion: Long
+    ): Outcome<WorkOrder>
 }

@@ -19,4 +19,14 @@ class WorkOrderActionPolicy @Inject constructor() {
             else -> false
         }
     }
+
+    fun canStart(actor: Actor, order: WorkOrder): Boolean {
+        if (!actor.isTechnician) return false
+        return order.status == WorkOrderStatus.ASSIGNED && order.assignedUserId?.value == actor.userId
+    }
+
+    fun canComplete(actor: Actor, order: WorkOrder): Boolean {
+        if (!actor.isTechnician) return false
+        return order.status == WorkOrderStatus.IN_PROGRESS && order.assignedUserId?.value == actor.userId
+    }
 }

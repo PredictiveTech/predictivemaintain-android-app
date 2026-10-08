@@ -12,7 +12,9 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrde
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.mapper.WorkOrderMapper
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssignWorkOrderRequestDto
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.CompleteWorkOrderRequestDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.CreateWorkOrderRequestDto
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.StartWorkOrderRequestDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.WorkOrderApiService
 import javax.inject.Inject
 
@@ -65,6 +67,37 @@ class WorkOrderRepositoryImpl @Inject constructor(
         )
         return when (val apiResult = safeApiCall(errorParser) {
             apiService.assignWorkOrder(id.value, request)
+        }) {
+            is Outcome.Success -> WorkOrderMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun startWorkOrder(
+        id: WorkOrderId,
+        expectedVersion: Long
+    ): Outcome<WorkOrder> {
+        val request = StartWorkOrderRequestDto(expectedVersion = expectedVersion)
+        return when (val apiResult = safeApiCall(errorParser) {
+            apiService.startWorkOrder(id.value, request)
+        }) {
+            is Outcome.Success -> WorkOrderMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun completeWorkOrder(
+        id: WorkOrderId,
+        summary: String,
+        expectedVersion: Long
+    ): Outcome<WorkOrder> {
+        val request = CompleteWorkOrderRequestDto(
+            status = "COMPLETED",
+            summary = summary,
+            expectedVersion = expectedVersion
+        )
+        return when (val apiResult = safeApiCall(errorParser) {
+            apiService.completeWorkOrder(id.value, request)
         }) {
             is Outcome.Success -> WorkOrderMapper.toDomain(apiResult.data)
             is Outcome.Failure -> apiResult

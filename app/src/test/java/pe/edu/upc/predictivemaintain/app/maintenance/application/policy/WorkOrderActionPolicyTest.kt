@@ -8,6 +8,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.Actor
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertSeverity
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetId
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
 import java.time.Instant
@@ -18,6 +19,7 @@ class WorkOrderActionPolicyTest {
 
     private val manager = Actor(userId = "mgr-1", isManager = true, isTechnician = false)
     private val technician = Actor(userId = "tech-1", isManager = false, isTechnician = true)
+    private val otherTechnician = Actor(userId = "tech-2", isManager = false, isTechnician = true)
     private val operator = Actor(userId = "op-1", isManager = false, isTechnician = false)
 
     @Test
@@ -40,7 +42,6 @@ class WorkOrderActionPolicyTest {
         val cancelledOrder = createOrderWithStatus(WorkOrderStatus.CANCELLED)
         val unknownOrder = createOrderWithStatus(WorkOrderStatus.UNKNOWN)
 
-        // Manager
         assertTrue(policy.canAssign(manager, openOrder))
         assertTrue(policy.canAssign(manager, assignedOrder))
         assertFalse(policy.canAssign(manager, inProgressOrder))
@@ -48,12 +49,50 @@ class WorkOrderActionPolicyTest {
         assertFalse(policy.canAssign(manager, cancelledOrder))
         assertFalse(policy.canAssign(manager, unknownOrder))
 
-        // Technician and Operator cannot assign regardless of status
         assertFalse(policy.canAssign(technician, openOrder))
         assertFalse(policy.canAssign(operator, openOrder))
     }
 
-    private fun createOrderWithStatus(status: WorkOrderStatus): WorkOrder {
+    @Test
+    fun `canStart returns true for assigned technician on ASSIGNED status only`() {
+        val assignedOrder = createOrderWithStatus(WorkOrderStatus.ASSIGNED, assignedTechId = "tech-1")
+        val openOrder = createOrderWithStatus(WorkOrderStatus.OPEN, assignedTechId = "tech-1")
+        val inProgressOrder = createOrderWithStatus(WorkOrderStatus.IN_PROGRESS, assignedTechId = "tech-1")
+
+        // Assigned technician
+        assertTrue(policy.canStart(technician, assignedOrder))
+        assertFalse(policy.canStart(technician, openOrder))
+        assertFalse(policy.canStart(technician, inProgressOrder))
+
+        // Another technician
+        assertFalse(policy.canStart(otherTechnician, assignedOrder))
+
+        // Manager
+        assertFalse(policy.canStart(manager, assignedOrder))
+    }
+
+    @Test
+    fun `canComplete returns true for assigned technician on IN_PROGRESS status only`() {
+        val inProgressOrder = createOrderWithStatus(WorkOrderStatus.IN_PROGRESS, assignedTechId = "tech-1")
+        val assignedOrder = createOrderWithStatus(WorkOrderStatus.ASSIGNED, assignedTechId = "tech-1")
+        val completedOrder = createOrderWithStatus(WorkOrderStatus.COMPLETED, assignedTechId = "tech-1")
+
+        // Assigned technician
+        assertTrue(policy.canComplete(technician, inProgressOrder))
+        assertFalse(policy.canComplete(technician, assignedOrder))
+        assertFalse(policy.canComplete(technician, completedOrder))
+
+        // Another technician
+        assertFalse(policy.canComplete(otherTechnician, inProgressOrder))
+
+        // Manager
+        assertFalse(policy.canComplete(manager, inProgressOrder))
+    }
+
+    private fun createOrderWithStatus(
+        status: WorkOrderStatus,
+        assignedTechId: String? = null
+    ): WorkOrder {
         return WorkOrder(
             id = WorkOrderId("wo-1"),
             alertId = AlertId("alert-1"),
@@ -61,7 +100,7 @@ class WorkOrderActionPolicyTest {
             assetCode = "AST-01",
             assetName = "Pump 1",
             severity = AlertSeverity.WARNING,
-            assignedUserId = null,
+            assignedUserId = assignedTechId?.let { TechnicianId(it) },
             status = status,
             summary = null,
             openedAt = Instant.now(),

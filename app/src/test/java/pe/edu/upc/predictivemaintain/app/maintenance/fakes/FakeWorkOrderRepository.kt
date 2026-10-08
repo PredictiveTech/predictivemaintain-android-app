@@ -17,6 +17,8 @@ class FakeWorkOrderRepository : WorkOrderRepository {
     var getWorkOrderResult: Outcome<WorkOrder>? = null
     var createWorkOrderResult: Outcome<WorkOrder>? = null
     var assignWorkOrderResult: Outcome<WorkOrder>? = null
+    var startWorkOrderResult: Outcome<WorkOrder>? = null
+    var completeWorkOrderResult: Outcome<WorkOrder>? = null
 
     var lastListStatusFilter: WorkOrderStatus? = null
     var lastListPage: Int? = null
@@ -45,5 +47,20 @@ class FakeWorkOrderRepository : WorkOrderRepository {
         expectedVersion: Long
     ): Outcome<WorkOrder> {
         return assignWorkOrderResult ?: error("assignWorkOrderResult not set")
+    }
+
+    override suspend fun startWorkOrder(
+        id: WorkOrderId,
+        expectedVersion: Long
+    ): Outcome<WorkOrder> {
+        return startWorkOrderResult ?: error("startWorkOrderResult not set")
+    }
+
+    override suspend fun completeWorkOrder(
+        id: WorkOrderId,
+        summary: String,
+        expectedVersion: Long
+    ): Outcome<WorkOrder> {
+        return completeWorkOrderResult ?: error("completeWorkOrderResult not set")
     }
 }

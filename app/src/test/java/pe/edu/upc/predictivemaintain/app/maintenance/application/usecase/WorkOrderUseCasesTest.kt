@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import pe.edu.upc.predictivemaintain.app.core.error.AppError
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
@@ -88,5 +89,55 @@ class WorkOrderUseCasesTest {
         assertTrue(result is Outcome.Success)
         assertEquals("tech-1", (result as Outcome.Success).data.assignedUserId?.value)
         assertEquals(WorkOrderStatus.ASSIGNED, result.data.status)
+    }
+
+    @Test
+    fun `StartWorkOrderUseCase invokes repository startWorkOrder`() = runTest {
+        val useCase = StartWorkOrderUseCase(fakeRepository)
+        val inProgress = sampleOrder.copy(status = WorkOrderStatus.IN_PROGRESS)
+        fakeRepository.startWorkOrderResult = Outcome.Success(inProgress)
+
+        val result = useCase(WorkOrderId("wo-1"), expectedVersion = 1L)
+
+        assertTrue(result is Outcome.Success)
+        assertEquals(WorkOrderStatus.IN_PROGRESS, (result as Outcome.Success).data.status)
+    }
+
+    @Test
+    fun `CompleteWorkOrderUseCase rejects blank summary without calling repository`() = runTest {
+        val useCase = CompleteWorkOrderUseCase(fakeRepository)
+
+        val result = useCase(WorkOrderId("wo-1"), summary = "   ", expectedVersion = 1L)
+
+        assertTrue(result is Outcome.Failure)
+        val error = (result as Outcome.Failure).error
+        assertTrue(error is AppError.InvalidResponse)
+        assertEquals("summary", (error as AppError.InvalidResponse).field)
+    }
+
+    @Test
+    fun `CompleteWorkOrderUseCase rejects summary over 2000 chars without calling repository`() = runTest {
+        val useCase = CompleteWorkOrderUseCase(fakeRepository)
+        val longSummary = "a".repeat(2001)
+
+        val result = useCase(WorkOrderId("wo-1"), summary = longSummary, expectedVersion = 1L)
+
+        assertTrue(result is Outcome.Failure)
+        val error = (result as Outcome.Failure).error
+        assertTrue(error is AppError.InvalidResponse)
+        assertEquals("summary", (error as AppError.InvalidResponse).field)
+    }
+
+    @Test
+    fun `CompleteWorkOrderUseCase calls repository with valid summary`() = runTest {
+        val useCase = CompleteWorkOrderUseCase(fakeRepository)
+        val completed = sampleOrder.copy(status = WorkOrderStatus.COMPLETED, summary = "Replaced bearing")
+        fakeRepository.completeWorkOrderResult = Outcome.Success(completed)
+
+        val result = useCase(WorkOrderId("wo-1"), summary = "Replaced bearing", expectedVersion = 1L)
+
+        assertTrue(result is Outcome.Success)
+        assertEquals(WorkOrderStatus.COMPLETED, (result as Outcome.Success).data.status)
+        assertEquals("Replaced bearing", result.data.summary)
     }
 }
