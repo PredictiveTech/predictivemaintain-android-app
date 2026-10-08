@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">PredictiveMaintain</string>
+    <string name="splash_checking">Verificando sesión…</string>
+    <string name="splash_retry">Reintentar</string>
+    <string name="splash_login_again">Iniciar sesión de nuevo</string>
+    <string name="login_title">Iniciar sesión en PredictiveMaintain</string>
+    <string name="login_email_hint">Correo electrónico</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="login_loading">Cargando…</string>
+    <string name="error_network">Error de red. Por favor verifique sus datos o conexión.</string>
+    <string name="error_invalid_response">Respuesta inesperada del servidor.</string>
+    <string name="error_unknown">Ocurrió un error inesperado.</string>
+    <string name="home_title">Inicio</string>
+    <string name="home_welcome">Bienvenido, %1$s</string>
+    <string name="home_email">Correo: %1$s</string>
+    <string name="home_roles">Roles: %1$s</string>
+    <string name="home_logout">Cerrar sesión</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_assets">Activos</string>
+    <string name="nav_alerts">Alertas</string>
+    <string name="nav_orders">Órdenes</string>
+    <string name="nav_my_orders">Mis órdenes</string>
+    <string name="nav_more">Más</string>
+    <string name="offline_notice">Sin conexión: mostrando datos guardados</string>
+    <string name="no_connection">Sin conexión a internet y sin datos guardados.</string>
+    <string name="retry">Reintentar</string>
+</resources>
