@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.HomeScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.LoginScreen
@@ -26,8 +28,11 @@ import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.HomeViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.LoginViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.SplashViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetailScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
 
 @Composable
@@ -120,14 +125,47 @@ fun AppNavigation(
                     }
                 )
             }
-            composable("assets/{assetId}") { backStackEntry ->
+            composable(
+                route = "assets/{assetId}",
+                arguments = listOf(navArgument("assetId") { type = NavType.StringType })
+            ) { backStackEntry ->
                 val assetId = backStackEntry.arguments?.getString("assetId") ?: ""
                 AssetDetailScreen(
                     assetId = assetId,
+                    onBackClick = { navController.popBackStack() },
+                    onViewAlertsClick = { id ->
+                        navController.navigate(Screen.Alerts.createRoute(id))
+                    }
+                )
+            }
+            composable(
+                route = "alerts?assetId={assetId}",
+                arguments = listOf(navArgument("assetId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                val assetId = backStackEntry.arguments?.getString("assetId")
+                val alertsViewModel: AlertsViewModel = hiltViewModel()
+                AlertsScreen(
+                    viewModel = alertsViewModel,
+                    assetId = assetId,
+                    onAlertClick = { alertId ->
+                        navController.navigate(Screen.AlertDetail.createRoute(alertId))
+                    }
+                )
+            }
+            composable(
+                route = "alerts/{alertId}",
+                arguments = listOf(navArgument("alertId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val alertId = backStackEntry.arguments?.getString("alertId") ?: ""
+                AlertDetailScreen(
+                    alertId = alertId,
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Alerts.route) { PlaceholderScreen("Alerts") }
             composable(Screen.Orders.route) { PlaceholderScreen("Orders") }
             composable(Screen.MyOrders.route) { PlaceholderScreen("My orders") }
             composable(Screen.More.route) { PlaceholderScreen("More") }

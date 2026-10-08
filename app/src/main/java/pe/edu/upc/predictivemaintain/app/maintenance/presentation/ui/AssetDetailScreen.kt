@@ -13,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +36,8 @@ fun AssetDetailScreen(
     modifier: Modifier = Modifier,
     viewModel: AssetDetailViewModel = hiltViewModel(),
     sensorPanelViewModel: SensorPanelViewModel = hiltViewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onViewAlertsClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -101,6 +103,15 @@ fun AssetDetailScreen(
                             text = stringResource(R.string.asset_criticality, asset.criticality.name),
                             style = MaterialTheme.typography.bodyMedium
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TextButton(
+                        onClick = { onViewAlertsClick(assetId) },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        Text(text = stringResource(R.string.view_asset_alerts))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
