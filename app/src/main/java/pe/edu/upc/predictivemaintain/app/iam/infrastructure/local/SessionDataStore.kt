@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 import pe.edu.upc.predictivemaintain.app.core.network.AccessTokenProvider
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.AccessToken
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.DisplayName
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Email
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.TenantId
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.UserId
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.mapper.AuthMapper
@@ -32,10 +34,12 @@ data class SessionLocalModel(
     val tenantId: String,
     val roles: List<String>,
     val accessToken: String,
-    val expiresAt: String
+    val expiresAt: String,
+    val displayName: String?,
+    val email: String?
 ) {
     override fun toString(): String {
-        return "SessionLocalModel(userId=$userId, tenantId=$tenantId, roles=$roles, accessToken=***, expiresAt=$expiresAt)"
+        return "SessionLocalModel(userId=$userId, tenantId=$tenantId, roles=$roles, accessToken=***, expiresAt=$expiresAt, displayName=$displayName, email=$email)"
     }
 }
 
@@ -47,7 +51,6 @@ class SessionDataStore @Inject constructor(
     private val cachedAccessToken = AtomicReference<String?>(null)
 
     init {
-        // 1. Filled when the stored session is first read from disk
         CoroutineScope(Dispatchers.IO).launch {
             context.dataStore.data.collect { prefs ->
                 val token = prefs[KEY_ACCESS_TOKEN]
@@ -63,7 +66,7 @@ class SessionDataStore @Inject constructor(
     fun observeSession(): Flow<AuthSession?> {
         return context.dataStore.data.map { prefs ->
             val token = prefs[KEY_ACCESS_TOKEN]
-            cachedAccessToken.set(token) // also update cache on read
+            cachedAccessToken.set(token)
 
             if (token == null) return@map null
             val expiresAtStr = prefs[KEY_EXPIRES_AT] ?: return@map clearAndReturnNull()
@@ -72,7 +75,6 @@ class SessionDataStore @Inject constructor(
             val rolesStr = prefs[KEY_ROLES] ?: return@map clearAndReturnNull()
 
             try {
-                // 2. Roles read from disk converted with AuthMapper.parseRoles inside try/catch for IllegalArgumentException only
                 val roleList = rolesStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                 val roles = AuthMapper.parseRoles(roleList)
                 val expiresAt = Instant.parse(expiresAtStr)
@@ -85,17 +87,14 @@ class SessionDataStore @Inject constructor(
                     expiresAt = expiresAt
                 )
             } catch (_: IllegalArgumentException) {
-                // Corrupt data: treat as no session, clear storage and cache, never throw
                 clearAndReturnNull()
             } catch (_: DateTimeParseException) {
-                // Unreadable expiry: treat as no session, clear storage and cache, never throw
                 clearAndReturnNull()
             }
         }
     }
 
     private suspend fun clearAndReturnNull(): AuthSession? {
-        // 3. Set to null when session is cleared / corrupt
         cachedAccessToken.set(null)
         try {
             context.dataStore.edit { it.clear() }
@@ -108,7 +107,6 @@ class SessionDataStore @Inject constructor(
     }
 
     suspend fun saveSession(session: AuthSession) {
-        // 2. Filled when a session is saved
         cachedAccessToken.set(session.accessToken.value)
         context.dataStore.edit { prefs ->
             prefs[KEY_ACCESS_TOKEN] = session.accessToken.value
@@ -120,10 +118,27 @@ class SessionDataStore @Inject constructor(
     }
 
     suspend fun clearSession() {
-        // 3. Set to null when the session is cleared
         cachedAccessToken.set(null)
         context.dataStore.edit { prefs ->
             prefs.clear()
+        }
+    }
+
+    suspend fun saveUserProfile(displayName: DisplayName, email: Email) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_DISPLAY_NAME] = displayName.value
+            prefs[KEY_EMAIL] = email.value
+        }
+    }
+
+    suspend fun getSavedUserProfile(): Pair<DisplayName, Email>? {
+        val prefs = context.dataStore.data.first()
+        val name = prefs[KEY_DISPLAY_NAME] ?: return null
+        val mail = prefs[KEY_EMAIL] ?: return null
+        return try {
+            Pair(DisplayName(name), Email(mail))
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -133,5 +148,7 @@ class SessionDataStore @Inject constructor(
         private val KEY_USER_ID = stringPreferencesKey("user_id")
         private val KEY_TENANT_ID = stringPreferencesKey("tenant_id")
         private val KEY_ROLES = stringPreferencesKey("roles")
+        private val KEY_DISPLAY_NAME = stringPreferencesKey("display_name")
+        private val KEY_EMAIL = stringPreferencesKey("email")
     }
 }

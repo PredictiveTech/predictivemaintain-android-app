@@ -43,13 +43,7 @@ object NetworkModule {
     @Singleton
     fun provideLanguageInterceptor(): LanguageInterceptor = LanguageInterceptor()
 
-    @Provides
-    @Singleton
-    fun provideAccessTokenProvider(): AccessTokenProvider {
-        return object : AccessTokenProvider {
-            override fun getAccessToken(): String? = null
-        }
-    }
+
 
     @Provides
     @Singleton

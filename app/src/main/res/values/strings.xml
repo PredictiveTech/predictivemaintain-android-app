@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">PredictiveMaintain</string>
+    <string name="splash_checking">Checking session…</string>
+    <string name="splash_retry">Retry</string>
+    <string name="splash_login_again">Log in again</string>
+    <string name="login_title">Log in to PredictiveMaintain</string>
+    <string name="login_email_hint">Email</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_button">Log in</string>
+    <string name="login_loading">Loading…</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_invalid_response">Unexpected server response.</string>
+    <string name="error_unknown">An unexpected error occurred.</string>
+    <string name="home_title">Home</string>
+    <string name="home_welcome">Welcome, %1$s</string>
+    <string name="home_email">Email: %1$s</string>
+    <string name="home_roles">Roles: %1$s</string>
+    <string name="home_logout">Log out</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_assets">Assets</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_my_orders">My orders</string>
+    <string name="nav_more">More</string>
+    <string name="offline_notice">Offline: showing saved data</string>
+    <string name="no_connection">No internet connection and no saved data available.</string>
+    <string name="retry">Retry</string>
 </resources>
