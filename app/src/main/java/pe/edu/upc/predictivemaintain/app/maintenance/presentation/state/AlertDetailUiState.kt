@@ -6,6 +6,7 @@ data class AlertDetailUiState(
     val isLoading: Boolean = false,
     val alert: Alert? = null,
     val canReview: Boolean = false,
+    val canCreateWorkOrder: Boolean = false,
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null

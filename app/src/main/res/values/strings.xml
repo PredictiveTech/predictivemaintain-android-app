@@ -90,4 +90,36 @@
     <string name="alerts_age_hours">%1$d h ago</string>
     <string name="alerts_age_days">%1$d d ago</string>
 
+    <string name="orders_title">Work Orders</string>
+    <string name="orders_my_title">My Work Orders</string>
+    <string name="orders_filter_all">All</string>
+    <string name="orders_filter_open">Open</string>
+    <string name="orders_filter_assigned">Assigned</string>
+    <string name="orders_filter_in_progress">In progress</string>
+    <string name="orders_filter_completed">Completed</string>
+    <string name="orders_status_open">Open</string>
+    <string name="orders_status_assigned">Assigned</string>
+    <string name="orders_status_in_progress">In progress</string>
+    <string name="orders_status_completed">Completed</string>
+    <string name="orders_status_cancelled">Cancelled</string>
+    <string name="orders_status_unknown">Unknown</string>
+    <string name="orders_severity_warning">Warning</string>
+    <string name="orders_severity_critical">Critical</string>
+    <string name="orders_severity_unknown">Unknown</string>
+    <string name="orders_assigned_technician">Technician: %1$s</string>
+    <string name="orders_unassigned">-</string>
+    <string name="orders_create_button">Create work order</string>
+    <string name="orders_assign_button">Assign</string>
+    <string name="orders_reassign_button">Reassign</string>
+    <string name="orders_dialog_select_technician">Select Technician</string>
+    <string name="orders_detail_title">Work Order Detail</string>
+    <string name="orders_detail_asset">Asset: %1$s - %2$s</string>
+    <string name="orders_detail_status">Status: %1$s</string>
+    <string name="orders_detail_severity">Severity: %1$s</string>
+    <string name="orders_detail_opened">Opened: %1$s</string>
+    <string name="orders_detail_completed">Completed: %1$s</string>
+    <string name="orders_detail_summary">Summary: %1$s</string>
+    <string name="orders_no_orders">No work orders found</string>
+    <string name="orders_cancel">Cancel</string>
+
 </resources>
