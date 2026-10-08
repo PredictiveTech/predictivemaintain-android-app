@@ -121,5 +121,10 @@
     <string name="orders_detail_summary">Summary: %1$s</string>
     <string name="orders_no_orders">No work orders found</string>
     <string name="orders_cancel">Cancel</string>
+    <string name="orders_start_button">Start work order</string>
+    <string name="orders_complete_button">Complete work order</string>
+    <string name="orders_complete_dialog_title">Complete Work Order</string>
+    <string name="orders_complete_summary_label">Corrective actions performed</string>
+    <string name="orders_submit">Submit</string>
 
 </resources>

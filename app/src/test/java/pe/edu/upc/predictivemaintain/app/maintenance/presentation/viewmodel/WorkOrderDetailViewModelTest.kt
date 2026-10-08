@@ -23,7 +23,9 @@ import pe.edu.upc.predictivemaintain.app.iam.fakes.FakeSessionRepository
 import pe.edu.upc.predictivemaintain.app.iam.fakes.FakeUserDirectoryRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.application.policy.WorkOrderActionPolicy
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.AssignWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.CompleteWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.StartWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertSeverity
@@ -67,6 +69,14 @@ class WorkOrderDetailViewModelTest {
         expiresAt = Instant.now().plusSeconds(3600)
     )
 
+    private val technicianSession = AuthSession(
+        userId = UserId("tech-1"),
+        tenantId = TenantId("tenant-1"),
+        roles = listOf(Role.TECHNICIAN),
+        accessToken = AccessToken("token"),
+        expiresAt = Instant.now().plusSeconds(3600)
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -76,12 +86,16 @@ class WorkOrderDetailViewModelTest {
 
         val getWorkOrderUseCase = GetWorkOrderUseCase(fakeWorkOrderRepository)
         val assignWorkOrderUseCase = AssignWorkOrderUseCase(fakeWorkOrderRepository)
+        val startWorkOrderUseCase = StartWorkOrderUseCase(fakeWorkOrderRepository)
+        val completeWorkOrderUseCase = CompleteWorkOrderUseCase(fakeWorkOrderRepository)
         val listTechniciansUseCase = ListTechniciansUseCase(fakeUserDirectoryRepository)
         val workOrderActionPolicy = WorkOrderActionPolicy()
 
         viewModel = WorkOrderDetailViewModel(
             getWorkOrderUseCase = getWorkOrderUseCase,
             assignWorkOrderUseCase = assignWorkOrderUseCase,
+            startWorkOrderUseCase = startWorkOrderUseCase,
+            completeWorkOrderUseCase = completeWorkOrderUseCase,
             listTechniciansUseCase = listTechniciansUseCase,
             workOrderActionPolicy = workOrderActionPolicy,
             sessionRepository = fakeSessionRepository
@@ -136,5 +150,80 @@ class WorkOrderDetailViewModelTest {
         val state = viewModel.uiState.value
         assertEquals("Version conflict", state.errorMessage)
         assertEquals(2L, state.order?.version)
+    }
+
+    @Test
+    fun `start moves order to IN_PROGRESS`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        val assignedOrder = sampleOrder.copy(
+            assignedUserId = TechnicianId("tech-1"),
+            status = WorkOrderStatus.ASSIGNED,
+            version = 2L
+        )
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(assignedOrder)
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val inProgressOrder = assignedOrder.copy(status = WorkOrderStatus.IN_PROGRESS, version = 3L)
+        fakeWorkOrderRepository.startWorkOrderResult = Outcome.Success(inProgressOrder)
+
+        viewModel.startWorkOrder()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(WorkOrderStatus.IN_PROGRESS, state.order?.status)
+        assertNotNull(state.successMessage)
+    }
+
+    @Test
+    fun `complete shows summary and moves order to COMPLETED`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        val inProgressOrder = sampleOrder.copy(
+            assignedUserId = TechnicianId("tech-1"),
+            status = WorkOrderStatus.IN_PROGRESS,
+            version = 3L
+        )
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(inProgressOrder)
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val completedOrder = inProgressOrder.copy(
+            status = WorkOrderStatus.COMPLETED,
+            summary = "Replaced faulty seal",
+            completedAt = Instant.now(),
+            version = 4L
+        )
+        fakeWorkOrderRepository.completeWorkOrderResult = Outcome.Success(completedOrder)
+
+        viewModel.completeWorkOrder("Replaced faulty seal")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(WorkOrderStatus.COMPLETED, state.order?.status)
+        assertEquals("Replaced faulty seal", state.order?.summary)
+        assertNotNull(state.successMessage)
+    }
+
+    @Test
+    fun `403 error displays server detail`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        val assignedOrder = sampleOrder.copy(
+            assignedUserId = TechnicianId("tech-1"),
+            status = WorkOrderStatus.ASSIGNED,
+            version = 2L
+        )
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(assignedOrder)
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        fakeWorkOrderRepository.startWorkOrderResult = Outcome.Failure(
+            AppError.Api(httpStatus = 403, code = "NOT_ASSIGNED_TECHNICIAN", detail = "Not assigned technician")
+        )
+
+        viewModel.startWorkOrder()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Not assigned technician", state.errorMessage)
     }
 }

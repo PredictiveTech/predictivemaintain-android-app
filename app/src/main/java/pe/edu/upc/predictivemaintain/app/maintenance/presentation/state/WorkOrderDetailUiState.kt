@@ -10,6 +10,8 @@ data class WorkOrderDetailUiState(
     val assignedTechnicianName: String? = null,
     val availableTechnicians: List<Technician> = emptyList(),
     val canAssign: Boolean = false,
+    val canStart: Boolean = false,
+    val canComplete: Boolean = false,
     val isManager: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null

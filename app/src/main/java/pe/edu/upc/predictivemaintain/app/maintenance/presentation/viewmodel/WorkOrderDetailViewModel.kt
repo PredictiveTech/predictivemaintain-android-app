@@ -15,7 +15,10 @@ import pe.edu.upc.predictivemaintain.app.iam.domain.repository.SessionRepository
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.maintenance.application.policy.WorkOrderActionPolicy
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.AssignWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.CompleteWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.StartWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.Actor
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderId
@@ -26,6 +29,8 @@ import javax.inject.Inject
 class WorkOrderDetailViewModel @Inject constructor(
     private val getWorkOrderUseCase: GetWorkOrderUseCase,
     private val assignWorkOrderUseCase: AssignWorkOrderUseCase,
+    private val startWorkOrderUseCase: StartWorkOrderUseCase,
+    private val completeWorkOrderUseCase: CompleteWorkOrderUseCase,
     private val listTechniciansUseCase: ListTechniciansUseCase,
     private val workOrderActionPolicy: WorkOrderActionPolicy,
     private val sessionRepository: SessionRepository
@@ -55,6 +60,8 @@ class WorkOrderDetailViewModel @Inject constructor(
                 is Outcome.Success -> {
                     val order = result.data
                     val canAssign = workOrderActionPolicy.canAssign(actor, order)
+                    val canStart = workOrderActionPolicy.canStart(actor, order)
+                    val canComplete = workOrderActionPolicy.canComplete(actor, order)
                     val assignedName = order.assignedUserId?.let { techId ->
                         techList.find { it.id.value == techId.value }?.displayName?.value
                     }
@@ -65,6 +72,8 @@ class WorkOrderDetailViewModel @Inject constructor(
                             assignedTechnicianName = assignedName,
                             availableTechnicians = techList,
                             canAssign = canAssign,
+                            canStart = canStart,
+                            canComplete = canComplete,
                             isManager = isManager,
                             errorMessage = null
                         )
@@ -91,42 +100,79 @@ class WorkOrderDetailViewModel @Inject constructor(
                 technicianId = TechnicianId(technicianId),
                 expectedVersion = order.version
             )
-            when (result) {
-                is Outcome.Success -> {
-                    val updatedOrder = result.data
-                    val session = sessionRepository.currentSession()
-                    val userId = session?.userId?.value ?: ""
-                    val isManager = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
-                    val isTechnician = session?.roles?.contains(Role.TECHNICIAN) == true
-                    val actor = Actor(userId = userId, isManager = isManager, isTechnician = isTechnician)
-                    val canAssign = workOrderActionPolicy.canAssign(actor, updatedOrder)
-                    val assignedName = updatedOrder.assignedUserId?.let { techId ->
-                        _uiState.value.availableTechnicians.find { it.id.value == techId.value }?.displayName?.value
-                    }
-                    _uiState.update {
-                        it.copy(
-                            isSubmitting = false,
-                            order = updatedOrder,
-                            assignedTechnicianName = assignedName,
-                            canAssign = canAssign,
-                            errorMessage = null,
-                            successMessage = "Work order assigned successfully."
-                        )
-                    }
+            handleMutationResult(result, order.id, "Work order assigned successfully.")
+        }
+    }
+
+    fun startWorkOrder() {
+        val order = _uiState.value.order ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null, successMessage = null) }
+            val result = startWorkOrderUseCase(
+                id = order.id,
+                expectedVersion = order.version
+            )
+            handleMutationResult(result, order.id, "Work order started successfully.")
+        }
+    }
+
+    fun completeWorkOrder(summary: String) {
+        val order = _uiState.value.order ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null, successMessage = null) }
+            val result = completeWorkOrderUseCase(
+                id = order.id,
+                summary = summary,
+                expectedVersion = order.version
+            )
+            handleMutationResult(result, order.id, "Work order completed successfully.")
+        }
+    }
+
+    private suspend fun handleMutationResult(
+        result: Outcome<WorkOrder>,
+        orderId: WorkOrderId,
+        successMsg: String
+    ) {
+        val session = sessionRepository.currentSession()
+        val userId = session?.userId?.value ?: ""
+        val isManager = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
+        val isTechnician = session?.roles?.contains(Role.TECHNICIAN) == true
+        val actor = Actor(userId = userId, isManager = isManager, isTechnician = isTechnician)
+
+        when (result) {
+            is Outcome.Success -> {
+                val updatedOrder = result.data
+                val canAssign = workOrderActionPolicy.canAssign(actor, updatedOrder)
+                val canStart = workOrderActionPolicy.canStart(actor, updatedOrder)
+                val canComplete = workOrderActionPolicy.canComplete(actor, updatedOrder)
+                val assignedName = updatedOrder.assignedUserId?.let { techId ->
+                    _uiState.value.availableTechnicians.find { it.id.value == techId.value }?.displayName?.value
                 }
-                is Outcome.Failure -> {
-                    val err = result.error
-                    if (err is AppError.Api && err.httpStatus == 409) {
-                        val detail = err.detail
-                        val session = sessionRepository.currentSession()
-                        val userId = session?.userId?.value ?: ""
-                        val isManager = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
-                        val isTechnician = session?.roles?.contains(Role.TECHNICIAN) == true
-                        val actor = Actor(userId = userId, isManager = isManager, isTechnician = isTechnician)
-                        when (val reloadResult = getWorkOrderUseCase(order.id)) {
+                _uiState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        order = updatedOrder,
+                        assignedTechnicianName = assignedName,
+                        canAssign = canAssign,
+                        canStart = canStart,
+                        canComplete = canComplete,
+                        errorMessage = null,
+                        successMessage = successMsg
+                    )
+                }
+            }
+            is Outcome.Failure -> {
+                val err = result.error
+                if (err is AppError.Api && (err.httpStatus == 409 || err.httpStatus == 403)) {
+                    val detail = err.detail
+                    if (err.httpStatus == 409) {
+                        when (val reloadResult = getWorkOrderUseCase(orderId)) {
                             is Outcome.Success -> {
                                 val reloaded = reloadResult.data
                                 val canAssign = workOrderActionPolicy.canAssign(actor, reloaded)
+                                val canStart = workOrderActionPolicy.canStart(actor, reloaded)
+                                val canComplete = workOrderActionPolicy.canComplete(actor, reloaded)
                                 val assignedName = reloaded.assignedUserId?.let { techId ->
                                     _uiState.value.availableTechnicians.find { it.id.value == techId.value }?.displayName?.value
                                 }
@@ -136,6 +182,8 @@ class WorkOrderDetailViewModel @Inject constructor(
                                         order = reloaded,
                                         assignedTechnicianName = assignedName,
                                         canAssign = canAssign,
+                                        canStart = canStart,
+                                        canComplete = canComplete,
                                         errorMessage = detail
                                     )
                                 }
@@ -153,9 +201,16 @@ class WorkOrderDetailViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isSubmitting = false,
-                                errorMessage = formatError(err)
+                                errorMessage = detail
                             )
                         }
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = formatError(err)
+                        )
                     }
                 }
             }

@@ -21,6 +21,18 @@ interface WorkOrderApiService {
         @Body request: AssignWorkOrderRequestDto
     ): Response<WorkOrderDto>
 
+    @POST("work-orders/{id}/start")
+    suspend fun startWorkOrder(
+        @Path("id") id: String,
+        @Body request: StartWorkOrderRequestDto
+    ): Response<WorkOrderDto>
+
+    @PATCH("work-orders/{id}/status")
+    suspend fun completeWorkOrder(
+        @Path("id") id: String,
+        @Body request: CompleteWorkOrderRequestDto
+    ): Response<WorkOrderDto>
+
     @GET("work-orders")
     suspend fun getWorkOrders(
         @Query("status") status: String? = null,
