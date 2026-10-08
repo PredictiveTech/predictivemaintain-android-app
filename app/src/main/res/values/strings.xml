@@ -56,4 +56,38 @@
     <string name="reading_ago_hours">%1$dh ago</string>
     <string name="reading_none">No readings</string>
     <string name="threshold_range">Range: [%1$s, %2$s] %3$s</string>
+    <string name="alerts_title">Alerts</string>
+    <string name="filter_status_in_review">In review</string>
+    <string name="filter_status_confirmed">Confirmed</string>
+    <string name="filter_status_discarded">Discarded</string>
+    <string name="filter_status_resolved">Resolved</string>
+    <string name="severity_warning">Warning</string>
+    <string name="severity_critical">Critical</string>
+    <string name="status_in_review">In review</string>
+    <string name="status_confirmed">Confirmed</string>
+    <string name="status_discarded">Discarded</string>
+    <string name="status_resolved">Resolved</string>
+    <string name="alert_diagnostic_title">Diagnostic</string>
+    <string name="alert_observed_value">Observed: %1$s %2$s</string>
+    <string name="alert_confirm">Confirm</string>
+    <string name="alert_discard">Discard</string>
+    <string name="alert_discard_reason_title">Discard Reason</string>
+    <string name="alert_discard_reason_hint">Enter reason (max 500 chars)</string>
+    <string name="alert_cancel">Cancel</string>
+    <string name="alert_submit">Submit</string>
+    <string name="no_alerts">No alerts found</string>
+    <string name="view_asset_alerts">View alerts for this asset</string>
+    <string name="error_discard_reason_blank">Discard reason cannot be blank</string>
+    <string name="error_discard_reason_too_long">Discard reason must be at most 500 characters</string>
+
+    <string name="alerts_retry">Retry</string>
+    <string name="alerts_severity_critical">Critical</string>
+    <string name="alerts_severity_warning">Warning</string>
+    <string name="alerts_severity_unknown">Unknown</string>
+    <string name="alerts_status_unknown">Unknown</string>
+    <string name="alerts_age_now">Just now</string>
+    <string name="alerts_age_minutes">%1$d min ago</string>
+    <string name="alerts_age_hours">%1$d h ago</string>
+    <string name="alerts_age_days">%1$d d ago</string>
+
 </resources>

@@ -8,7 +8,12 @@ sealed class Screen(val route: String) {
     data object AssetDetail : Screen("assets/{assetId}") {
         fun createRoute(assetId: String) = "assets/$assetId"
     }
-    data object Alerts : Screen("alerts")
+    data object Alerts : Screen("alerts") {
+        fun createRoute(assetId: String? = null) = if (!assetId.isNullOrBlank() && assetId != "{assetId}") "alerts?assetId=$assetId" else "alerts"
+    }
+    data object AlertDetail : Screen("alerts/{alertId}") {
+        fun createRoute(alertId: String) = "alerts/$alertId"
+    }
     data object Orders : Screen("orders")
     data object MyOrders : Screen("my_orders")
     data object More : Screen("more")

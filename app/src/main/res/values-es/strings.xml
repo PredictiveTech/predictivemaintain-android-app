@@ -56,4 +56,38 @@
     <string name="reading_ago_hours">hace %1$dh</string>
     <string name="reading_none">Sin lecturas</string>
     <string name="threshold_range">Rango: [%1$s, %2$s] %3$s</string>
+    <string name="alerts_title">Alertas</string>
+    <string name="filter_status_in_review">En revisión</string>
+    <string name="filter_status_confirmed">Confirmada</string>
+    <string name="filter_status_discarded">Descartada</string>
+    <string name="filter_status_resolved">Resuelta</string>
+    <string name="severity_warning">Advertencia</string>
+    <string name="severity_critical">Crítico</string>
+    <string name="status_in_review">En revisión</string>
+    <string name="status_confirmed">Confirmada</string>
+    <string name="status_discarded">Descartada</string>
+    <string name="status_resolved">Resuelta</string>
+    <string name="alert_diagnostic_title">Diagnóstico</string>
+    <string name="alert_observed_value">Observado: %1$s %2$s</string>
+    <string name="alert_confirm">Confirmar</string>
+    <string name="alert_discard">Descartar</string>
+    <string name="alert_discard_reason_title">Motivo de Descartes</string>
+    <string name="alert_discard_reason_hint">Ingrese motivo (máx. 500 caracteres)</string>
+    <string name="alert_cancel">Cancelar</string>
+    <string name="alert_submit">Enviar</string>
+    <string name="no_alerts">No se encontraron alertas</string>
+    <string name="view_asset_alerts">Ver alertas de este activo</string>
+    <string name="error_discard_reason_blank">El motivo no puede estar en blanco</string>
+    <string name="error_discard_reason_too_long">El motivo debe tener máximo 500 caracteres</string>
+
+    <string name="alerts_retry">Reintentar</string>
+    <string name="alerts_severity_critical">Crítica</string>
+    <string name="alerts_severity_warning">Advertencia</string>
+    <string name="alerts_severity_unknown">Desconocida</string>
+    <string name="alerts_status_unknown">Desconocido</string>
+    <string name="alerts_age_now">Ahora mismo</string>
+    <string name="alerts_age_minutes">hace %1$d min</string>
+    <string name="alerts_age_hours">hace %1$d h</string>
+    <string name="alerts_age_days">hace %1$d d</string>
+
 </resources>
