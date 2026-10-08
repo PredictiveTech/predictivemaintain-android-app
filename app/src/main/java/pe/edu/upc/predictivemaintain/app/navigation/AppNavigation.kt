@@ -32,8 +32,12 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetail
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrderDetailScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrdersScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrderDetailViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrdersViewModel
 
 @Composable
 fun AppNavigation(
@@ -163,11 +167,42 @@ fun AppNavigation(
                 val alertId = backStackEntry.arguments?.getString("alertId") ?: ""
                 AlertDetailScreen(
                     alertId = alertId,
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToWorkOrder = { orderId ->
+                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    }
+                )
+            }
+            composable(Screen.Orders.route) {
+                val workOrdersViewModel: WorkOrdersViewModel = hiltViewModel()
+                WorkOrdersScreen(
+                    viewModel = workOrdersViewModel,
+                    onOrderClick = { orderId ->
+                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    }
+                )
+            }
+            composable(Screen.MyOrders.route) {
+                val workOrdersViewModel: WorkOrdersViewModel = hiltViewModel()
+                WorkOrdersScreen(
+                    viewModel = workOrdersViewModel,
+                    onOrderClick = { orderId ->
+                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    }
+                )
+            }
+            composable(
+                route = "orders/{orderId}",
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                val workOrderDetailViewModel: WorkOrderDetailViewModel = hiltViewModel()
+                WorkOrderDetailScreen(
+                    orderId = orderId,
+                    viewModel = workOrderDetailViewModel,
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Orders.route) { PlaceholderScreen("Orders") }
-            composable(Screen.MyOrders.route) { PlaceholderScreen("My orders") }
             composable(Screen.More.route) { PlaceholderScreen("More") }
         }
     }

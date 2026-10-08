@@ -90,4 +90,36 @@
     <string name="alerts_age_hours">hace %1$d h</string>
     <string name="alerts_age_days">hace %1$d d</string>
 
+    <string name="orders_title">Órdenes de Trabajo</string>
+    <string name="orders_my_title">Mis Órdenes de Trabajo</string>
+    <string name="orders_filter_all">Todas</string>
+    <string name="orders_filter_open">Abiertas</string>
+    <string name="orders_filter_assigned">Asignadas</string>
+    <string name="orders_filter_in_progress">En progreso</string>
+    <string name="orders_filter_completed">Completadas</string>
+    <string name="orders_status_open">Abierta</string>
+    <string name="orders_status_assigned">Asignada</string>
+    <string name="orders_status_in_progress">En progreso</string>
+    <string name="orders_status_completed">Completada</string>
+    <string name="orders_status_cancelled">Cancelada</string>
+    <string name="orders_status_unknown">Desconocido</string>
+    <string name="orders_severity_warning">Advertencia</string>
+    <string name="orders_severity_critical">Crítica</string>
+    <string name="orders_severity_unknown">Desconocida</string>
+    <string name="orders_assigned_technician">Técnico: %1$s</string>
+    <string name="orders_unassigned">-</string>
+    <string name="orders_create_button">Crear orden de trabajo</string>
+    <string name="orders_assign_button">Asignar</string>
+    <string name="orders_reassign_button">Reasignar</string>
+    <string name="orders_dialog_select_technician">Seleccionar Técnico</string>
+    <string name="orders_detail_title">Detalle de Orden de Trabajo</string>
+    <string name="orders_detail_asset">Activo: %1$s - %2$s</string>
+    <string name="orders_detail_status">Estado: %1$s</string>
+    <string name="orders_detail_severity">Severidad: %1$s</string>
+    <string name="orders_detail_opened">Abierta: %1$s</string>
+    <string name="orders_detail_completed">Completada: %1$s</string>
+    <string name="orders_detail_summary">Resumen: %1$s</string>
+    <string name="orders_no_orders">No se encontraron órdenes de trabajo</string>
+    <string name="orders_cancel">Cancelar</string>
+
 </resources>

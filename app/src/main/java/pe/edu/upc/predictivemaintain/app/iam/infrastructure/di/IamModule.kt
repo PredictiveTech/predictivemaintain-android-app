@@ -8,10 +8,13 @@ import dagger.hilt.components.SingletonComponent
 import pe.edu.upc.predictivemaintain.app.core.network.AccessTokenProvider
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.AuthRepository
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.SessionRepository
+import pe.edu.upc.predictivemaintain.app.iam.domain.repository.UserDirectoryRepository
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.implementation.AuthRepositoryImpl
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.implementation.SessionRepositoryImpl
+import pe.edu.upc.predictivemaintain.app.iam.infrastructure.implementation.UserDirectoryRepositoryImpl
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.local.SessionDataStore
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.AuthApiService
+import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UserDirectoryApiService
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -37,11 +40,23 @@ abstract class IamModule {
         impl: SessionDataStore
     ): AccessTokenProvider
 
+    @Binds
+    @Singleton
+    abstract fun bindUserDirectoryRepository(
+        impl: UserDirectoryRepositoryImpl
+    ): UserDirectoryRepository
+
     companion object {
         @Provides
         @Singleton
         fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
             return retrofit.create(AuthApiService::class.java)
+        }
+
+        @Provides
+        @Singleton
+        fun provideUserDirectoryApiService(retrofit: Retrofit): UserDirectoryApiService {
+            return retrofit.create(UserDirectoryApiService::class.java)
         }
     }
 }

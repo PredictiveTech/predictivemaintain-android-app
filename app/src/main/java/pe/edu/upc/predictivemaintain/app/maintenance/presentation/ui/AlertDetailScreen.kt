@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.StatusChip
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertDetailUiEvent
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,6 +42,7 @@ fun AlertDetailScreen(
     alertId: String,
     viewModel: AlertDetailViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
+    onNavigateToWorkOrder: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -49,6 +51,14 @@ fun AlertDetailScreen(
 
     LaunchedEffect(alertId) {
         viewModel.loadAlert(alertId)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is AlertDetailUiEvent.NavigateToWorkOrder -> onNavigateToWorkOrder(event.workOrderId)
+            }
+        }
     }
 
     Scaffold(
@@ -166,6 +176,17 @@ fun AlertDetailScreen(
                             ) {
                                 Text(text = stringResource(R.string.alert_discard))
                             }
+                        }
+                    }
+
+                    if (uiState.canCreateWorkOrder) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.createWorkOrder() },
+                            enabled = !uiState.isSubmitting,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.orders_create_button))
                         }
                     }
                 }
