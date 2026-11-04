@@ -7,6 +7,7 @@
     <string name="login_email_hint">Email</string>
     <string name="login_password_hint">Password</string>
     <string name="login_button">Log in</string>
+    <string name="login_subtitle">by PredictiveTech</string>
     <string name="login_loading">Loading…</string>
     <string name="error_network">Network error. Please check your connection.</string>
     <string name="error_invalid_response">Unexpected server response.</string>
@@ -30,6 +31,7 @@
     <string name="filter_operational">Operational</string>
     <string name="filter_in_alert">In alert</string>
     <string name="filter_no_communication">No communication</string>
+    <string name="filter_no_communication_short">No comm.</string>
     <string name="asset_type">Type: %1$s</string>
     <string name="asset_location">Location: %1$s</string>
     <string name="asset_criticality">Criticality: %1$s</string>

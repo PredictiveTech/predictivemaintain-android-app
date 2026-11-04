@@ -22,7 +22,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
-import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.HomeScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.LoginScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.HomeViewModel
@@ -45,7 +44,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("?")
 
     val destinations = session?.let { destinationsFor(it.roles) } ?: emptyList()
     val showBottomBar = session != null && destinations.any { it.screen.route == currentRoute }
@@ -87,7 +86,7 @@ fun AppNavigation(
                 SplashScreen(
                     viewModel = splashViewModel,
                     onNavigateToHome = {
-                        navController.navigate(Screen.Home.route) {
+                        navController.navigate(Screen.Assets.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     },
@@ -103,27 +102,24 @@ fun AppNavigation(
                 LoginScreen(
                     viewModel = loginViewModel,
                     onNavigateToHome = {
-                        navController.navigate(Screen.Home.route) {
+                        navController.navigate(Screen.Assets.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
-                        }
-                    }
-                )
-            }
-            composable(Screen.Home.route) {
-                val homeViewModel: HomeViewModel = hiltViewModel()
-                HomeScreen(
-                    viewModel = homeViewModel,
-                    onLoggedOut = {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                         }
                     }
                 )
             }
             composable(Screen.Assets.route) {
                 val assetsViewModel: AssetsViewModel = hiltViewModel()
+                val homeViewModel: HomeViewModel = hiltViewModel()
                 AssetsScreen(
                     viewModel = assetsViewModel,
+                    onLogout = {
+                        homeViewModel.logout {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                            }
+                        }
+                    },
                     onAssetClick = { assetId ->
                         navController.navigate(Screen.AssetDetail.createRoute(assetId))
                     }
@@ -203,7 +199,6 @@ fun AppNavigation(
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable(Screen.More.route) { PlaceholderScreen("More") }
         }
     }
 }

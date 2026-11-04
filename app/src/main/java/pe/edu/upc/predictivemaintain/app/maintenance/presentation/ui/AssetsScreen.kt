@@ -1,6 +1,15 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import pe.edu.upc.predictivemaintain.app.core.ui.ColoredStatusChip
+import pe.edu.upc.predictivemaintain.app.core.ui.StatusTone
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetStatus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +51,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.Asse
 fun AssetsScreen(
     viewModel: AssetsViewModel,
     onAssetClick: (String) -> Unit,
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,7 +60,12 @@ fun AssetsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.assets_title)) }
+                title = { Text(text = stringResource(R.string.assets_title)) },
+                actions = {
+                    TextButton(onClick = onLogout) {
+                        Text(text = stringResource(R.string.home_logout))
+                    }
+                }
             )
         },
         modifier = modifier
@@ -63,6 +78,7 @@ fun AssetsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -84,7 +100,7 @@ fun AssetsScreen(
                 FilterChip(
                     selected = uiState.selectedStatusFilter == "NO_COMMUNICATION",
                     onClick = { viewModel.setStatusFilter("NO_COMMUNICATION") },
-                    label = { Text(text = stringResource(R.string.filter_no_communication)) }
+                    label = { Text(text = stringResource(R.string.filter_no_communication_short)) }
                 )
             }
 
@@ -131,14 +147,23 @@ fun AssetsScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = "${asset.code.value} - ${asset.name}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        StatusChip(text = asset.status.name)
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = asset.name,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onBackground
+                                            )
+                                            Text(
+                                                text = asset.code.value,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFF94A3B8)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        AssetStatusChip(status = asset.status)
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = stringResource(R.string.asset_type, asset.assetType),
                                         style = MaterialTheme.typography.bodyMedium,
@@ -174,4 +199,16 @@ fun AssetsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun AssetStatusChip(status: AssetStatus) {
+    val (label, tone) = when (status) {
+        AssetStatus.IN_ALERT -> R.string.status_in_alert to StatusTone.DANGER
+        AssetStatus.OPERATIONAL -> R.string.status_operational to StatusTone.SUCCESS
+        AssetStatus.NO_COMMUNICATION -> R.string.status_no_communication to StatusTone.NEUTRAL
+        AssetStatus.INACTIVE -> R.string.status_inactive to StatusTone.NEUTRAL
+        AssetStatus.UNKNOWN -> R.string.status_unknown to StatusTone.NEUTRAL
+    }
+    ColoredStatusChip(text = stringResource(label), tone = tone)
 }

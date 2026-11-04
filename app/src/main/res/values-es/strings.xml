@@ -7,6 +7,7 @@
     <string name="login_email_hint">Correo electrónico</string>
     <string name="login_password_hint">Contraseña</string>
     <string name="login_button">Iniciar sesión</string>
+    <string name="login_subtitle">by PredictiveTech</string>
     <string name="login_loading">Cargando…</string>
     <string name="error_network">Error de red. Por favor verifique sus datos o conexión.</string>
     <string name="error_invalid_response">Respuesta inesperada del servidor.</string>
@@ -30,6 +31,7 @@
     <string name="filter_operational">Operativo</string>
     <string name="filter_in_alert">En alerta</string>
     <string name="filter_no_communication">Sin comunicación</string>
+    <string name="filter_no_communication_short">Sin comm.</string>
     <string name="asset_type">Tipo: %1$s</string>
     <string name="asset_location">Ubicación: %1$s</string>
     <string name="asset_criticality">Criticidad: %1$s</string>
