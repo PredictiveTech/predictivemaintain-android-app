@@ -15,5 +15,18 @@ data class WorkOrdersUiState(
     val isTechnician: Boolean = false,
     val technicianNames: Map<String, String> = emptyMap(),
     val errorMessage: String? = null,
-    val isErrorState: Boolean = false
+    val isErrorState: Boolean = false,
+    val isOffline: Boolean = false,
+    val isSyncing: Boolean = false,
+    val pendingCount: Int = 0,
+    val syncResult: SyncResultUi? = null
 )
+
+/** What the user must be told after a synchronization. [issues] are server messages for refused actions. */
+data class SyncResultUi(
+    val appliedCount: Int,
+    val issues: List<String> = emptyList(),
+    val errorMessage: String? = null
+) {
+    val needsAttention: Boolean get() = issues.isNotEmpty() || errorMessage != null
+}

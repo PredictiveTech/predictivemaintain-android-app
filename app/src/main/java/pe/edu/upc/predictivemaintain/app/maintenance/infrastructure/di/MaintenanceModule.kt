@@ -14,6 +14,11 @@ import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementati
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AlertApiService
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssetApiService
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.WorkOrderApiService
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.PendingOperationQueue
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncRepository
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementation.SyncRepositoryImpl
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.PendingOperationDataStore
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncApiService
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -39,7 +44,25 @@ abstract class MaintenanceModule {
         impl: WorkOrderRepositoryImpl
     ): WorkOrderRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindSyncRepository(
+        impl: SyncRepositoryImpl
+    ): SyncRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPendingOperationQueue(
+        impl: PendingOperationDataStore
+    ): PendingOperationQueue
+
     companion object {
+        @Provides
+        @Singleton
+        fun provideSyncApiService(retrofit: Retrofit): SyncApiService {
+            return retrofit.create(SyncApiService::class.java)
+        }
+
         @Provides
         @Singleton
         fun provideAssetApiService(retrofit: Retrofit): AssetApiService {

@@ -127,4 +127,15 @@
     <string name="orders_complete_summary_label">Acciones correctivas realizadas</string>
     <string name="orders_submit">Enviar</string>
 
+    <string name="sync_offline">Sin conexión. Tus acciones se guardan y se sincronizarán después.</string>
+    <string name="sync_offline_with_pending">Sin conexión. %1$d acción(es) pendientes de sincronizar.</string>
+    <string name="sync_syncing">Sincronizando %1$d acción(es) pendientes…</string>
+    <string name="sync_pending">%1$d acción(es) pendientes de sincronizar</string>
+    <string name="sync_result_title">Resultado de la sincronización</string>
+    <string name="sync_result_applied">%1$d acción(es) sincronizadas.</string>
+    <string name="sync_result_issues_title">Estas acciones no se pudieron aplicar (se mantuvo la versión del servidor):</string>
+    <string name="sync_result_failed">Falló la sincronización: %1$s</string>
+    <string name="sync_result_dismiss">Aceptar</string>
+    <string name="orders_pending_sync">Guardado en este dispositivo. Se sincronizará cuando vuelva la conexión.</string>
+
 </resources>
