@@ -127,4 +127,15 @@
     <string name="orders_complete_summary_label">Corrective actions performed</string>
     <string name="orders_submit">Submit</string>
 
+    <string name="sync_offline">No connection. Your actions are saved and will sync later.</string>
+    <string name="sync_offline_with_pending">No connection. %1$d action(s) waiting to sync.</string>
+    <string name="sync_syncing">Syncing %1$d pending action(s)…</string>
+    <string name="sync_pending">%1$d action(s) waiting to sync</string>
+    <string name="sync_result_title">Synchronization result</string>
+    <string name="sync_result_applied">%1$d action(s) synchronized.</string>
+    <string name="sync_result_issues_title">These actions could not be applied (the server version was kept):</string>
+    <string name="sync_result_failed">Synchronization failed: %1$s</string>
+    <string name="sync_result_dismiss">OK</string>
+    <string name="orders_pending_sync">Saved on this device. It will sync when the connection returns.</string>
+
 </resources>

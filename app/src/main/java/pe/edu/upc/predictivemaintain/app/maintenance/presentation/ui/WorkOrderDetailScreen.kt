@@ -97,6 +97,15 @@ fun WorkOrderDetailScreen(
                     )
                 }
 
+                if (uiState.isPendingSync) {
+                    Text(
+                        text = stringResource(R.string.orders_pending_sync),
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
                 uiState.order?.let { order ->
                     Text(
                         text = stringResource(R.string.orders_detail_asset, order.assetCode, order.assetName),

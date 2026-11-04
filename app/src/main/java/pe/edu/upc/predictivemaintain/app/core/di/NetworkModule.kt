@@ -3,7 +3,11 @@ package pe.edu.upc.predictivemaintain.app.core.di
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import android.content.Context
+import pe.edu.upc.predictivemaintain.app.core.connectivity.AndroidConnectivityObserver
+import pe.edu.upc.predictivemaintain.app.core.connectivity.ConnectivityObserver
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -30,6 +34,11 @@ object NetworkModule {
         coerceInputValues = true
         isLenient = true
     }
+
+    @Provides
+    @Singleton
+    fun provideConnectivityObserver(@ApplicationContext context: Context): ConnectivityObserver =
+        AndroidConnectivityObserver(context)
 
     @Provides
     @Singleton

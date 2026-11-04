@@ -1,5 +1,11 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel
 
+import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncCoordinator
+import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncPendingOperationsUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.fakes.FakeConnectivityObserver
+import pe.edu.upc.predictivemaintain.app.maintenance.fakes.FakePendingOperationQueue
+import pe.edu.upc.predictivemaintain.app.maintenance.fakes.FakeSyncRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -74,7 +80,13 @@ class WorkOrdersViewModelTest {
         viewModel = WorkOrdersViewModel(
             listWorkOrdersUseCase = listWorkOrdersUseCase,
             listTechniciansUseCase = listTechniciansUseCase,
-            sessionRepository = fakeSessionRepository
+            sessionRepository = fakeSessionRepository,
+            syncCoordinator = SyncCoordinator(
+            FakeConnectivityObserver(),
+            FakePendingOperationQueue().let { q -> q },
+            SyncPendingOperationsUseCase(FakePendingOperationQueue(), FakeSyncRepository(), fakeSessionRepository),
+            CoroutineScope(testDispatcher)
+        )
         )
     }
 

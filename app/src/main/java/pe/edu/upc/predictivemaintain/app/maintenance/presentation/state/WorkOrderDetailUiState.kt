@@ -13,6 +13,7 @@ data class WorkOrderDetailUiState(
     val canStart: Boolean = false,
     val canComplete: Boolean = false,
     val isManager: Boolean = false,
+    val isPendingSync: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )

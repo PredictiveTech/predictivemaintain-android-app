@@ -14,18 +14,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,6 +44,7 @@ import pe.edu.upc.predictivemaintain.app.core.ui.EmptyStateComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.ErrorStateComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.StatusChip
+import pe.edu.upc.predictivemaintain.app.core.ui.SyncStatusBanner
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertSeverity
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
@@ -60,6 +66,47 @@ fun WorkOrdersScreen(
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val syncResult = uiState.syncResult
+    val syncOkMessage = syncResult?.takeIf { !it.needsAttention }
+        ?.let { stringResource(R.string.sync_result_applied, it.appliedCount) }
+
+    LaunchedEffect(syncResult) {
+        if (syncOkMessage != null) {
+            snackbarHostState.showSnackbar(syncOkMessage)
+            viewModel.dismissSyncResult()
+        }
+    }
+
+    if (syncResult != null && syncResult.needsAttention) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissSyncResult() },
+            title = { Text(text = stringResource(R.string.sync_result_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    syncResult.errorMessage?.let {
+                        Text(text = stringResource(R.string.sync_result_failed, it))
+                    }
+                    if (syncResult.appliedCount > 0) {
+                        Text(text = stringResource(R.string.sync_result_applied, syncResult.appliedCount))
+                    }
+                    if (syncResult.issues.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.sync_result_issues_title),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        syncResult.issues.forEach { Text(text = "• $it") }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissSyncResult() }) {
+                    Text(text = stringResource(R.string.sync_result_dismiss))
+                }
+            }
+        )
     }
 
     val title = if (uiState.isTechnician && !uiState.isManager) {
@@ -91,6 +138,7 @@ fun WorkOrdersScreen(
                 title = { Text(text = title) }
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
     ) { innerPadding ->
         Column(
@@ -98,6 +146,12 @@ fun WorkOrdersScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            SyncStatusBanner(
+                isOffline = uiState.isOffline,
+                isSyncing = uiState.isSyncing,
+                pendingCount = uiState.pendingCount
+            )
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

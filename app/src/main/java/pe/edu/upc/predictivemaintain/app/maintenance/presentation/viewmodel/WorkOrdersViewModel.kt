@@ -13,8 +13,11 @@ import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.iam.application.usecase.ListTechniciansUseCase
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.SessionRepository
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
+import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncCoordinator
+import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncEvent
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.ListWorkOrdersUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.state.SyncResultUi
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.state.WorkOrdersUiState
 import javax.inject.Inject
 
@@ -22,7 +25,8 @@ import javax.inject.Inject
 class WorkOrdersViewModel @Inject constructor(
     private val listWorkOrdersUseCase: ListWorkOrdersUseCase,
     private val listTechniciansUseCase: ListTechniciansUseCase,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val syncCoordinator: SyncCoordinator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkOrdersUiState())
@@ -33,7 +37,44 @@ class WorkOrdersViewModel @Inject constructor(
     fun init() {
         if (initialLoaded) return
         initialLoaded = true
+        observeSync()
         setupActorAndLoad()
+    }
+
+    private fun observeSync() {
+        syncCoordinator.start()
+        viewModelScope.launch {
+            syncCoordinator.state.collect { sync ->
+                _uiState.update {
+                    it.copy(
+                        isOffline = !sync.isOnline,
+                        isSyncing = sync.isSyncing,
+                        pendingCount = sync.pendingCount
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            syncCoordinator.events.collect { event ->
+                val result = when (event) {
+                    is SyncEvent.Completed -> SyncResultUi(
+                        appliedCount = event.report.appliedCount,
+                        issues = event.report.issues.map { it.message ?: it.outcome.name }
+                    )
+                    is SyncEvent.Failed -> SyncResultUi(
+                        appliedCount = 0,
+                        errorMessage = formatError(event.error)
+                    )
+                }
+                _uiState.update { it.copy(syncResult = result) }
+                // The server may have changed the orders: show the real state.
+                loadOrders(page = 0, isRefresh = true)
+            }
+        }
+    }
+
+    fun dismissSyncResult() {
+        _uiState.update { it.copy(syncResult = null) }
     }
 
     private fun setupActorAndLoad() {
@@ -63,6 +104,7 @@ class WorkOrdersViewModel @Inject constructor(
     }
 
     fun refresh() {
+        if (_uiState.value.pendingCount > 0) syncCoordinator.syncNow()
         loadOrders(page = 0, isRefresh = true)
     }
 

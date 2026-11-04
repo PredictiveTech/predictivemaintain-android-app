@@ -14,6 +14,7 @@ import pe.edu.upc.predictivemaintain.app.iam.application.usecase.ListTechnicians
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.SessionRepository
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.maintenance.application.policy.WorkOrderActionPolicy
+import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncCoordinator
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.AssignWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.CompleteWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderUseCase
@@ -33,11 +34,29 @@ class WorkOrderDetailViewModel @Inject constructor(
     private val completeWorkOrderUseCase: CompleteWorkOrderUseCase,
     private val listTechniciansUseCase: ListTechniciansUseCase,
     private val workOrderActionPolicy: WorkOrderActionPolicy,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val syncCoordinator: SyncCoordinator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkOrderDetailUiState())
     val uiState: StateFlow<WorkOrderDetailUiState> = _uiState.asStateFlow()
+
+    init {
+        syncCoordinator.start()
+        viewModelScope.launch {
+            syncCoordinator.state.collect { sync ->
+                _uiState.update { state ->
+                    state.copy(isPendingSync = state.order?.id?.value in sync.pendingOrderIds)
+                }
+            }
+        }
+        viewModelScope.launch {
+            // A synchronization finished: the server has the final word on this order.
+            syncCoordinator.events.collect {
+                _uiState.value.order?.let { loadOrder(it.id.value) }
+            }
+        }
+    }
 
     fun loadOrder(id: String) {
         viewModelScope.launch {
@@ -59,6 +78,7 @@ class WorkOrderDetailViewModel @Inject constructor(
             when (val result = getWorkOrderUseCase(WorkOrderId(id))) {
                 is Outcome.Success -> {
                     val order = result.data
+                    val pendingSync = syncCoordinator.hasPending(order.id.value)
                     val canAssign = workOrderActionPolicy.canAssign(actor, order)
                     val canStart = workOrderActionPolicy.canStart(actor, order)
                     val canComplete = workOrderActionPolicy.canComplete(actor, order)
@@ -75,6 +95,7 @@ class WorkOrderDetailViewModel @Inject constructor(
                             canStart = canStart,
                             canComplete = canComplete,
                             isManager = isManager,
+                            isPendingSync = pendingSync,
                             errorMessage = null
                         )
                     }
@@ -143,6 +164,7 @@ class WorkOrderDetailViewModel @Inject constructor(
         when (result) {
             is Outcome.Success -> {
                 val updatedOrder = result.data
+                val pendingSync = syncCoordinator.hasPending(updatedOrder.id.value)
                 val canAssign = workOrderActionPolicy.canAssign(actor, updatedOrder)
                 val canStart = workOrderActionPolicy.canStart(actor, updatedOrder)
                 val canComplete = workOrderActionPolicy.canComplete(actor, updatedOrder)
@@ -157,8 +179,9 @@ class WorkOrderDetailViewModel @Inject constructor(
                         canAssign = canAssign,
                         canStart = canStart,
                         canComplete = canComplete,
+                        isPendingSync = pendingSync,
                         errorMessage = null,
-                        successMessage = successMsg
+                        successMessage = if (pendingSync) null else successMsg
                     )
                 }
             }
