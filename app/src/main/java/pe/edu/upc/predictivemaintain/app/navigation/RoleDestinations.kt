@@ -12,24 +12,18 @@ fun destinationsFor(roles: List<Role>): List<BottomNavDestination> {
 
     return when (highestRole) {
         Role.MAINTENANCE_MANAGER -> listOf(
-            BottomNavDestination(Screen.Home, R.string.nav_home),
             BottomNavDestination(Screen.Assets, R.string.nav_assets),
             BottomNavDestination(Screen.Alerts, R.string.nav_alerts),
-            BottomNavDestination(Screen.Orders, R.string.nav_orders),
-            BottomNavDestination(Screen.More, R.string.nav_more)
+            BottomNavDestination(Screen.Orders, R.string.nav_orders)
         )
         Role.TECHNICIAN -> listOf(
-            BottomNavDestination(Screen.Home, R.string.nav_home),
             BottomNavDestination(Screen.Assets, R.string.nav_assets),
             BottomNavDestination(Screen.Alerts, R.string.nav_alerts),
-            BottomNavDestination(Screen.MyOrders, R.string.nav_my_orders),
-            BottomNavDestination(Screen.More, R.string.nav_more)
+            BottomNavDestination(Screen.MyOrders, R.string.nav_my_orders)
         )
         Role.OPERATOR -> listOf(
-            BottomNavDestination(Screen.Home, R.string.nav_home),
             BottomNavDestination(Screen.Assets, R.string.nav_assets),
-            BottomNavDestination(Screen.Alerts, R.string.nav_alerts),
-            BottomNavDestination(Screen.More, R.string.nav_more)
+            BottomNavDestination(Screen.Alerts, R.string.nav_alerts)
         )
     }
 }
