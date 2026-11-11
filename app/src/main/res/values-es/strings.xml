@@ -139,5 +139,10 @@
     <string name="sync_result_failed">Falló la sincronización: %1$s</string>
     <string name="sync_result_dismiss">Aceptar</string>
     <string name="orders_pending_sync">Guardado en este dispositivo. Se sincronizará cuando vuelva la conexión.</string>
+    <string name="orders_attach_photo">Adjuntar foto</string>
+    <string name="orders_photo_source_title">Seleccionar origen de foto</string>
+    <string name="orders_photo_camera">Cámara</string>
+    <string name="orders_photo_gallery">Galería</string>
+    <string name="orders_photo_preview">Vista previa de foto</string>
 
 </resources>

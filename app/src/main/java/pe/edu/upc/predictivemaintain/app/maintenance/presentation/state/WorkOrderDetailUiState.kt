@@ -14,6 +14,7 @@ data class WorkOrderDetailUiState(
     val canComplete: Boolean = false,
     val isManager: Boolean = false,
     val isPendingSync: Boolean = false,
+    val selectedPhotoUri: String? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )

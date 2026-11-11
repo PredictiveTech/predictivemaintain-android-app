@@ -35,4 +35,9 @@ interface WorkOrderRepository {
         summary: String,
         expectedVersion: Long
     ): Outcome<WorkOrder>
+
+    suspend fun uploadAttachment(
+        id: WorkOrderId,
+        imageUriString: String
+    ): Outcome<Unit>
 }

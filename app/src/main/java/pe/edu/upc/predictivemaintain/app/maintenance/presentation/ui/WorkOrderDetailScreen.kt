@@ -1,5 +1,8 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,14 +34,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.StatusChip
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrderDetailViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,6 +194,7 @@ fun WorkOrderDetailScreen(
                         Button(
                             onClick = {
                                 completeSummaryText = ""
+                                viewModel.setPhotoUri(null)
                                 showCompleteDialog = true
                             },
                             enabled = !uiState.isSubmitting,
@@ -241,11 +251,52 @@ fun WorkOrderDetailScreen(
         }
 
         if (showCompleteDialog) {
+            val context = LocalContext.current
+            var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+            var showPhotoSourceDialog by remember { mutableStateOf(false) }
+
+            val cameraLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.TakePicture()
+            ) { success ->
+                if (success && tempCameraUri != null) {
+                    viewModel.setPhotoUri(tempCameraUri.toString())
+                }
+            }
+
+            val cameraPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { isGranted ->
+                if (isGranted) {
+                    try {
+                        val photoFile = File(context.cacheDir, "work_order_${System.currentTimeMillis()}.jpg")
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            photoFile
+                        )
+                        tempCameraUri = uri
+                        cameraLauncher.launch(uri)
+                    } catch (_: Exception) {}
+                }
+            }
+
+            val galleryLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                if (uri != null) {
+                    viewModel.setPhotoUri(uri.toString())
+                }
+            }
+
             AlertDialog(
                 onDismissRequest = { showCompleteDialog = false },
                 title = { Text(text = stringResource(R.string.orders_complete_dialog_title)) },
                 text = {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         OutlinedTextField(
                             value = completeSummaryText,
                             onValueChange = { completeSummaryText = it },
@@ -261,6 +312,32 @@ fun WorkOrderDetailScreen(
                             color = if (completeSummaryText.length > 2000) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(Alignment.End)
                         )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedButton(
+                            onClick = { showPhotoSourceDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.orders_attach_photo))
+                        }
+
+                        if (!uiState.selectedPhotoUri.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.orders_photo_preview),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            AsyncImage(
+                                model = uiState.selectedPhotoUri,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
                 },
                 confirmButton = {
@@ -281,6 +358,44 @@ fun WorkOrderDetailScreen(
                     }
                 }
             )
+
+            if (showPhotoSourceDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPhotoSourceDialog = false },
+                    title = { Text(text = stringResource(R.string.orders_photo_source_title)) },
+                    text = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    showPhotoSourceDialog = false
+                                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = stringResource(R.string.orders_photo_camera))
+                            }
+                            Button(
+                                onClick = {
+                                    showPhotoSourceDialog = false
+                                    galleryLauncher.launch("image/*")
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = stringResource(R.string.orders_photo_gallery))
+                            }
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        Button(onClick = { showPhotoSourceDialog = false }) {
+                            Text(text = stringResource(R.string.orders_cancel))
+                        }
+                    }
+                )
+            }
         }
     }
 }

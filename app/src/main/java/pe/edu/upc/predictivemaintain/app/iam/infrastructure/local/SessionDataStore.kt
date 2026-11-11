@@ -142,6 +142,17 @@ class SessionDataStore @Inject constructor(
         }
     }
 
+    suspend fun saveFcmToken(token: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_FCM_TOKEN] = token
+        }
+    }
+
+    suspend fun getFcmToken(): String? {
+        val prefs = context.dataStore.data.first()
+        return prefs[KEY_FCM_TOKEN]
+    }
+
     companion object {
         private val KEY_ACCESS_TOKEN = stringPreferencesKey("access_token")
         private val KEY_EXPIRES_AT = stringPreferencesKey("expires_at")
@@ -150,5 +161,6 @@ class SessionDataStore @Inject constructor(
         private val KEY_ROLES = stringPreferencesKey("roles")
         private val KEY_DISPLAY_NAME = stringPreferencesKey("display_name")
         private val KEY_EMAIL = stringPreferencesKey("email")
+        private val KEY_FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 }
