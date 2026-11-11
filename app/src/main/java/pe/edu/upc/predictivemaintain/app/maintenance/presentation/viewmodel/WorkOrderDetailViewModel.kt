@@ -137,14 +137,20 @@ class WorkOrderDetailViewModel @Inject constructor(
         }
     }
 
+    fun setPhotoUri(uri: String?) {
+        _uiState.update { it.copy(selectedPhotoUri = uri) }
+    }
+
     fun completeWorkOrder(summary: String) {
         val order = _uiState.value.order ?: return
+        val photoUri = _uiState.value.selectedPhotoUri
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, errorMessage = null, successMessage = null) }
             val result = completeWorkOrderUseCase(
                 id = order.id,
                 summary = summary,
-                expectedVersion = order.version
+                expectedVersion = order.version,
+                imageUriString = photoUri
             )
             handleMutationResult(result, order.id, "Work order completed successfully.")
         }

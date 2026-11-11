@@ -139,5 +139,10 @@
     <string name="sync_result_failed">Synchronization failed: %1$s</string>
     <string name="sync_result_dismiss">OK</string>
     <string name="orders_pending_sync">Saved on this device. It will sync when the connection returns.</string>
+    <string name="orders_attach_photo">Attach photo</string>
+    <string name="orders_photo_source_title">Select photo source</string>
+    <string name="orders_photo_camera">Camera</string>
+    <string name="orders_photo_gallery">Gallery</string>
+    <string name="orders_photo_preview">Photo preview</string>
 
 </resources>

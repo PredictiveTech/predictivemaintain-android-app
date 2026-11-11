@@ -1,5 +1,11 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementation
 
+import android.content.Context
+import android.net.Uri
+import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import pe.edu.upc.predictivemaintain.app.core.error.AppError
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.network.ErrorParser
@@ -27,6 +33,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 class WorkOrderRepositoryImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val apiService: WorkOrderApiService,
     private val errorParser: ErrorParser,
     private val cache: WorkOrderCache,
@@ -160,5 +167,29 @@ class WorkOrderRepositoryImpl @Inject constructor(
         }
         cache.put(optimistic)
         return Outcome.Success(optimistic)
+    }
+
+    override suspend fun uploadAttachment(
+        id: WorkOrderId,
+        imageUriString: String
+    ): Outcome<Unit> {
+        return try {
+            val uri = Uri.parse(imageUriString)
+            val bytes = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                inputStream.readBytes()
+            } ?: return Outcome.Failure(AppError.InvalidResponse("Invalid image URI"))
+
+            val requestBody = bytes.toRequestBody("image/*".toMediaTypeOrNull())
+            val part = MultipartBody.Part.createFormData("file", "attachment.jpg", requestBody)
+
+            when (val result = safeApiCall(errorParser) {
+                apiService.uploadAttachment(id.value, part)
+            }) {
+                is Outcome.Success -> Outcome.Success(Unit)
+                is Outcome.Failure -> result
+            }
+        } catch (e: Exception) {
+            Outcome.Failure(AppError.Unknown(e))
+        }
     }
 }
