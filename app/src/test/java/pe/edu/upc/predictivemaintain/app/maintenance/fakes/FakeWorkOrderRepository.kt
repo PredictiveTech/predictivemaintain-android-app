@@ -2,6 +2,7 @@ package pe.edu.upc.predictivemaintain.app.maintenance.fakes
 
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.WorkOrderRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
@@ -19,6 +20,11 @@ class FakeWorkOrderRepository : WorkOrderRepository {
     var assignWorkOrderResult: Outcome<WorkOrder>? = null
     var startWorkOrderResult: Outcome<WorkOrder>? = null
     var completeWorkOrderResult: Outcome<WorkOrder>? = null
+    var uploadAttachmentResult: Outcome<Unit> = Outcome.Success(Unit)
+    var listAttachmentsResult: Outcome<List<Evidence>> = Outcome.Success(emptyList())
+
+    var uploadAttachmentCalls = 0
+    var lastUploadedUri: String? = null
 
     var lastListStatusFilter: WorkOrderStatus? = null
     var lastListPage: Int? = null
@@ -62,5 +68,15 @@ class FakeWorkOrderRepository : WorkOrderRepository {
         expectedVersion: Long
     ): Outcome<WorkOrder> {
         return completeWorkOrderResult ?: error("completeWorkOrderResult not set")
+    }
+
+    override suspend fun uploadAttachment(id: WorkOrderId, imageUriString: String): Outcome<Unit> {
+        uploadAttachmentCalls++
+        lastUploadedUri = imageUriString
+        return uploadAttachmentResult
+    }
+
+    override suspend fun listAttachments(id: WorkOrderId): Outcome<List<Evidence>> {
+        return listAttachmentsResult
     }
 }
