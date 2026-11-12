@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "122946245721",
+    "project_id": "predictivemaintain-be84b",
+    "storage_bucket": "predictivemaintain-be84b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122946245721:android:703df18022bec2c7a9cd48",
+        "android_client_info": {
+          "package_name": "pe.edu.upc.predictivemaintain.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgp_LdR1fYN3Zr0nhOcPEd9ZtWaPz_9Ug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
