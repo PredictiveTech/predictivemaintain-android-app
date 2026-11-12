@@ -21,6 +21,9 @@ sealed interface CreateAssetError {
     /** 409 ASSET_INACTIVE: a deactivated asset cannot be edited. */
     data object AssetInactive : CreateAssetError
 
+    /** 409 ASSET_HAS_OPEN_WORK_ORDERS: deactivation needs an explicit confirmation (force=true). */
+    data object HasOpenWorkOrders : CreateAssetError
+
     /** 404 ASSET_NOT_FOUND. */
     data object NotFound : CreateAssetError
 

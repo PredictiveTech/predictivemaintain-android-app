@@ -172,8 +172,13 @@ fun AppNavigation(
                     onViewAlertsClick = { id ->
                         navController.navigate(Screen.Alerts.createRoute(id))
                     },
-                    canEdit = canCreateAssets,
-                    onEditClick = { navController.navigate(Screen.EditAsset.createRoute(assetId)) }
+                    canManage = canCreateAssets,
+                    onEditClick = { navController.navigate(Screen.EditAsset.createRoute(assetId)) },
+                    onDeactivated = {
+                        // The list must stop showing the asset: refresh it for when the user goes back.
+                        runCatching { navController.getBackStackEntry(Screen.Assets.route) }
+                            .getOrNull()?.savedStateHandle?.set(ASSETS_REFRESH_KEY, true)
+                    }
                 )
             }
             composable(

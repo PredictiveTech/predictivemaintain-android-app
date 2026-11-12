@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.state.DeactivateDialog
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetDetailViewModel
 import pe.edu.upc.predictivemaintain.app.telemetry.presentation.ui.SensorPanel
 import pe.edu.upc.predictivemaintain.app.telemetry.presentation.viewmodel.SensorPanelViewModel
@@ -38,14 +44,25 @@ fun AssetDetailScreen(
     sensorPanelViewModel: SensorPanelViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
     onViewAlertsClick: (String) -> Unit,
-    canEdit: Boolean = false,
-    onEditClick: () -> Unit = {}
+    canManage: Boolean = false,
+    onEditClick: () -> Unit = {},
+    onDeactivated: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(assetId) {
         viewModel.loadAsset(assetId)
     }
+
+    LaunchedEffect(uiState.deactivated) {
+        if (uiState.deactivated) onDeactivated()
+    }
+
+    DeactivateDialogs(
+        dialog = uiState.deactivateDialog,
+        onConfirm = viewModel::confirmDeactivate,
+        onDismiss = viewModel::dismissDeactivateDialog
+    )
 
     Scaffold(
         topBar = {
@@ -58,7 +75,7 @@ fun AssetDetailScreen(
                 },
                 actions = {
                     // An inactive asset cannot be edited (the backend answers 409).
-                    if (canEdit && uiState.asset?.active == true) {
+                    if (canManage && uiState.asset?.active == true) {
                         TextButton(onClick = onEditClick) {
                             Text(text = stringResource(R.string.edit_asset_action))
                         }
@@ -115,6 +132,15 @@ fun AssetDetailScreen(
                         )
                     }
 
+                    if (!asset.active) {
+                        Text(
+                            text = stringResource(R.string.asset_inactive_notice),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     TextButton(
@@ -122,6 +148,29 @@ fun AssetDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Text(text = stringResource(R.string.view_asset_alerts))
+                    }
+
+                    if (canManage && asset.active) {
+                        uiState.deactivateError?.let { error ->
+                            Text(
+                                text = submitErrorText(error),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = viewModel::requestDeactivate,
+                            enabled = !uiState.isDeactivating,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            if (uiState.isDeactivating) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text(text = stringResource(R.string.deactivate_asset_action))
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -134,4 +183,34 @@ fun AssetDetailScreen(
             }
         }
     }
+}
+
+@Composable
+private fun DeactivateDialogs(
+    dialog: DeactivateDialog,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (dialog == DeactivateDialog.NONE) return
+    val message = if (dialog == DeactivateDialog.CONFIRM_WITH_OPEN_ORDERS) {
+        R.string.deactivate_asset_open_orders_message
+    } else {
+        R.string.deactivate_asset_confirm_message
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.deactivate_asset_confirm_title)) },
+        text = { Text(text = stringResource(message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    text = stringResource(R.string.deactivate_asset_action),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+        }
+    )
 }

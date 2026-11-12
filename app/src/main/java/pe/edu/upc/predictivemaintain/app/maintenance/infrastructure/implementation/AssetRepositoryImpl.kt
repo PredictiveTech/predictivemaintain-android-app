@@ -47,4 +47,11 @@ class AssetRepositoryImpl @Inject constructor(
             is Outcome.Failure -> apiResult
         }
     }
+
+    override suspend fun deactivateAsset(id: String, force: Boolean): Outcome<AssetDetail> {
+        return when (val apiResult = safeApiCall(errorParser) { assetApiService.deactivateAsset(id, force) }) {
+            is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
 }

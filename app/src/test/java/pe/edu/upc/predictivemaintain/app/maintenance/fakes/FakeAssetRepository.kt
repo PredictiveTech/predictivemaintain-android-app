@@ -14,6 +14,8 @@ class FakeAssetRepository : AssetRepository {
     var getAssetResult: Outcome<AssetDetail> = Outcome.Failure(AppError.Unknown())
     var createAssetResult: Outcome<Asset> = Outcome.Failure(AppError.Unknown())
     var updateAssetResult: Outcome<AssetDetail> = Outcome.Failure(AppError.Unknown())
+    var deactivateAssetResult: Outcome<AssetDetail> = Outcome.Failure(AppError.Unknown())
+    val deactivateCalls = mutableListOf<Pair<String, Boolean>>()
     val updatedRequests = mutableListOf<Pair<String, AssetChanges>>()
     val createdRequests = mutableListOf<NewAsset>()
 
@@ -33,5 +35,10 @@ class FakeAssetRepository : AssetRepository {
     override suspend fun updateAsset(id: String, changes: AssetChanges): Outcome<AssetDetail> {
         updatedRequests += id to changes
         return updateAssetResult
+    }
+
+    override suspend fun deactivateAsset(id: String, force: Boolean): Outcome<AssetDetail> {
+        deactivateCalls += id to force
+        return deactivateAssetResult
     }
 }

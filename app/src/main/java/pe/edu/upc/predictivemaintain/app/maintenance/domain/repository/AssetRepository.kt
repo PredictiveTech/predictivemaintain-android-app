@@ -11,5 +11,6 @@ interface AssetRepository {
     suspend fun getAssets(status: String?, page: Int, size: Int): Outcome<PageResult<Asset>>
     suspend fun getAsset(id: String): Outcome<AssetDetail>
     suspend fun createAsset(newAsset: NewAsset): Outcome<Asset>
+    suspend fun deactivateAsset(id: String, force: Boolean): Outcome<AssetDetail>
     suspend fun updateAsset(id: String, changes: AssetChanges): Outcome<AssetDetail>
 }

@@ -77,6 +77,7 @@ fun CreateAssetUiState.withField(field: AssetFormField, value: String): CreateAs
 fun AppError.toAssetFormError(): CreateAssetError = when {
     this is AppError.Api && httpStatus == 409 && code == "ASSET_CODE_ALREADY_EXISTS" -> CreateAssetError.DuplicateCode
     this is AppError.Api && httpStatus == 409 && code == "ASSET_INACTIVE" -> CreateAssetError.AssetInactive
+    this is AppError.Api && httpStatus == 409 && code == "ASSET_HAS_OPEN_WORK_ORDERS" -> CreateAssetError.HasOpenWorkOrders
     this is AppError.Api && httpStatus == 404 && code == "ASSET_NOT_FOUND" -> CreateAssetError.NotFound
     this is AppError.Api && httpStatus == 403 && code == "CAPACITY_EXCEEDED" -> CreateAssetError.CapacityExceeded
     this is AppError.Api && httpStatus == 403 -> CreateAssetError.Forbidden

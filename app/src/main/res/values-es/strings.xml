@@ -195,4 +195,10 @@
     <string name="edit_asset_submit">Guardar cambios</string>
     <string name="edit_asset_error_inactive">Este activo está desactivado y ya no se puede editar.</string>
     <string name="edit_asset_error_not_found">Este activo ya no existe.</string>
+    <string name="deactivate_asset_action">Desactivar</string>
+    <string name="deactivate_asset_confirm_title">Desactivar activo</string>
+    <string name="deactivate_asset_confirm_message">¿Seguro que deseas desactivar este activo? Saldrá del monitoreo y se liberará su cupo del plan. Ya no se podrá editar.</string>
+    <string name="deactivate_asset_open_orders_message">Este activo tiene órdenes de trabajo abiertas. ¿Desactivarlo de todos modos?</string>
+    <string name="asset_inactive_notice">Este activo está desactivado.</string>
+    <string name="cancel">Cancelar</string>
 </resources>

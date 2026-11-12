@@ -195,4 +195,10 @@
     <string name="edit_asset_submit">Save changes</string>
     <string name="edit_asset_error_inactive">This asset is deactivated and can no longer be edited.</string>
     <string name="edit_asset_error_not_found">This asset no longer exists.</string>
+    <string name="deactivate_asset_action">Deactivate</string>
+    <string name="deactivate_asset_confirm_title">Deactivate asset</string>
+    <string name="deactivate_asset_confirm_message">Are you sure you want to deactivate this asset? It will leave the monitoring and its plan slot will be released. It will no longer be editable.</string>
+    <string name="deactivate_asset_open_orders_message">This asset has open work orders. Deactivate it anyway?</string>
+    <string name="asset_inactive_notice">This asset is deactivated.</string>
+    <string name="cancel">Cancel</string>
 </resources>

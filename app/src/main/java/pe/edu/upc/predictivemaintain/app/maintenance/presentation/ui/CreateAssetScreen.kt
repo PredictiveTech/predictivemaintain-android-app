@@ -341,11 +341,12 @@ private fun fieldErrorText(error: FieldError, maxLength: Int?): String = when (e
 }
 
 @Composable
-private fun submitErrorText(error: CreateAssetError): String = when (error) {
+internal fun submitErrorText(error: CreateAssetError): String = when (error) {
     CreateAssetError.DuplicateCode -> stringResource(R.string.create_asset_error_duplicate)
     CreateAssetError.CapacityExceeded -> stringResource(R.string.create_asset_error_capacity)
     CreateAssetError.Forbidden -> stringResource(R.string.create_asset_error_forbidden)
     CreateAssetError.AssetInactive -> stringResource(R.string.edit_asset_error_inactive)
+    CreateAssetError.HasOpenWorkOrders -> stringResource(R.string.deactivate_asset_open_orders_message)
     CreateAssetError.NotFound -> stringResource(R.string.edit_asset_error_not_found)
     is CreateAssetError.Other -> when (val e = error.error) {
         is AppError.Api -> e.detail
