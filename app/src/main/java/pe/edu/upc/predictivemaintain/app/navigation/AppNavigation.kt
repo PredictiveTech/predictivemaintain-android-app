@@ -10,11 +10,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.LoginScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.ProfileScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
@@ -33,12 +36,16 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetail
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.CreateAssetScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrderDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrdersScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.CreateAssetViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrderDetailViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrdersViewModel
+
+private const val ASSETS_REFRESH_KEY = "assets_refresh"
 
 @Composable
 fun AppNavigation(
@@ -48,6 +55,7 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("?")
 
+    val canCreateAssets = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
     val destinations = session?.let { destinationsFor(it.roles) } ?: emptyList()
     val showBottomBar = session != null && destinations.any { it.screen.route == currentRoute }
 
@@ -110,12 +118,33 @@ fun AppNavigation(
                     }
                 )
             }
-            composable(Screen.Assets.route) {
+            composable(Screen.Assets.route) { backStackEntry ->
                 val assetsViewModel: AssetsViewModel = hiltViewModel()
+                val savedStateHandle = backStackEntry.savedStateHandle
+                val needsRefresh by savedStateHandle.getStateFlow(ASSETS_REFRESH_KEY, false).collectAsStateWithLifecycle()
+                LaunchedEffect(needsRefresh) {
+                    if (needsRefresh) {
+                        assetsViewModel.refresh()
+                        savedStateHandle[ASSETS_REFRESH_KEY] = false
+                    }
+                }
                 AssetsScreen(
                     viewModel = assetsViewModel,
+                    canCreate = canCreateAssets,
+                    onCreateClick = { navController.navigate(Screen.CreateAsset.route) },
                     onAssetClick = { assetId ->
                         navController.navigate(Screen.AssetDetail.createRoute(assetId))
+                    }
+                )
+            }
+            composable(Screen.CreateAsset.route) {
+                val createAssetViewModel: CreateAssetViewModel = hiltViewModel()
+                CreateAssetScreen(
+                    viewModel = createAssetViewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onCreated = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(ASSETS_REFRESH_KEY, true)
+                        navController.popBackStack()
                     }
                 )
             }

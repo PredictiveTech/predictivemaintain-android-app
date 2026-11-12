@@ -23,7 +23,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -50,6 +54,8 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.Asse
 fun AssetsScreen(
     viewModel: AssetsViewModel,
     onAssetClick: (String) -> Unit,
+    canCreate: Boolean = false,
+    onCreateClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,6 +64,16 @@ fun AssetsScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = stringResource(R.string.assets_title)) })
+        },
+        floatingActionButton = {
+            if (canCreate) {
+                FloatingActionButton(onClick = onCreateClick) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.create_asset_title)
+                    )
+                }
+            }
         },
         modifier = modifier
     ) { innerPadding ->

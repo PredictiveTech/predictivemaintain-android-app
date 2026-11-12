@@ -1,7 +1,9 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote
 
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -17,4 +19,9 @@ interface AssetApiService {
     suspend fun getAsset(
         @Path("id") id: String
     ): Response<AssetDetailDto>
+
+    @POST("assets")
+    suspend fun createAsset(
+        @Body request: CreateAssetRequestDto
+    ): Response<AssetDto>
 }
