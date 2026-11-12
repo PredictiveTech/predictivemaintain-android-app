@@ -1,4 +1,4 @@
-package pe.edu.upc.predictivemaintain.app.iam.infrastructure.fcm
+package pe.edu.upc.predictivemaintain.app.notifications.infrastructure.fcm
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -16,7 +17,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import pe.edu.upc.predictivemaintain.app.MainActivity
 import pe.edu.upc.predictivemaintain.app.R
+import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.local.SessionDataStore
+import pe.edu.upc.predictivemaintain.app.notifications.application.usecase.RegisterDeviceTokenUseCase
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,21 +28,31 @@ class PredictiveMaintainFirebaseMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var sessionDataStore: SessionDataStore
 
+    @Inject
+    lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
+
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        Log.d(TAG, "onNewToken: FCM token rotated (${token.take(8)}…, length=${token.length})")
         serviceScope.launch {
             try {
                 sessionDataStore.saveFcmToken(token)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.d(TAG, "Could not store the FCM token locally: $e")
+            }
+            when (val result = registerDeviceTokenUseCase(token)) {
+                is Outcome.Success -> Log.d(TAG, "onNewToken: rotated token sent to backend")
+                is Outcome.Failure -> Log.d(TAG, "onNewToken: token not sent (${result.error}); it is sent again on next login/app start")
             }
         }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
+        Log.d(TAG, "onMessageReceived: from=${message.from} hasNotification=${message.notification != null} data=${message.data.keys}")
         showNotification(message)
     }
 
@@ -87,5 +100,9 @@ class PredictiveMaintainFirebaseMessagingService : FirebaseMessagingService() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+    }
+
+    private companion object {
+        const val TAG = "FCM"
     }
 }

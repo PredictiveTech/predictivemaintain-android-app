@@ -30,11 +30,10 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <service
-            android:name=".iam.infrastructure.fcm.PredictiveMaintainFirebaseMessagingService"
+            android:name=".notifications.infrastructure.fcm.PredictiveMaintainFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.google.firebase.messaging.NEW_TOKEN" />
-                <action android:name="com.google.firebase.messaging.MESSAGE_EVENT" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
         <activity
