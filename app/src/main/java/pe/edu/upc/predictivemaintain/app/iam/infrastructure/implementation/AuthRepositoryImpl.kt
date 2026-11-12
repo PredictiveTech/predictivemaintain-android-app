@@ -6,6 +6,7 @@ import pe.edu.upc.predictivemaintain.app.core.network.safeApiCall
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.UserProfile
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.AuthRepository
+import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.DisplayName
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Email
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Password
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.mapper.AuthMapper
@@ -31,6 +32,14 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun fetchProfile(): Outcome<UserProfile> {
         return when (val apiResult = safeApiCall(errorParser) { authApiService.getMe() }) {
+            is Outcome.Success -> AuthMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun updateProfile(displayName: DisplayName): Outcome<UserProfile> {
+        val requestDto = AuthMapper.toRequestDto(displayName)
+        return when (val apiResult = safeApiCall(errorParser) { authApiService.updateMe(requestDto) }) {
             is Outcome.Success -> AuthMapper.toDomain(apiResult.data)
             is Outcome.Failure -> apiResult
         }

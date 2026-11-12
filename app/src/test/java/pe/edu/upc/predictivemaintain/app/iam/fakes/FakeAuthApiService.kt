@@ -3,6 +3,7 @@ package pe.edu.upc.predictivemaintain.app.iam.fakes
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.AuthApiService
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.LoginRequestDto
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.LoginResponseDto
+import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UpdateProfileRequestDto
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UserDto
 import retrofit2.Response
 
@@ -11,7 +12,10 @@ class FakeAuthApiService : AuthApiService {
     var loginResponse: Response<LoginResponseDto>? = null
     var getMeResponse: Response<UserDto>? = null
 
+    var updateMeResponse: Response<UserDto>? = null
+
     var lastLoginRequest: LoginRequestDto? = null
+    var lastUpdateRequest: UpdateProfileRequestDto? = null
 
     override suspend fun login(request: LoginRequestDto): Response<LoginResponseDto> {
         lastLoginRequest = request
@@ -34,6 +38,20 @@ class FakeAuthApiService : AuthApiService {
                 tenantId = "t-fake",
                 email = "user@plant.com",
                 displayName = "Fake User",
+                active = true,
+                roles = listOf("TECHNICIAN")
+            )
+        )
+    }
+
+    override suspend fun updateMe(request: UpdateProfileRequestDto): Response<UserDto> {
+        lastUpdateRequest = request
+        return updateMeResponse ?: Response.success(
+            UserDto(
+                id = "u-fake",
+                tenantId = "t-fake",
+                email = "user@plant.com",
+                displayName = request.displayName,
                 active = true,
                 roles = listOf("TECHNICIAN")
             )

@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import pe.edu.upc.predictivemaintain.app.core.ui.ColoredStatusChip
@@ -51,7 +50,6 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.Asse
 fun AssetsScreen(
     viewModel: AssetsViewModel,
     onAssetClick: (String) -> Unit,
-    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -59,14 +57,7 @@ fun AssetsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.assets_title)) },
-                actions = {
-                    TextButton(onClick = onLogout) {
-                        Text(text = stringResource(R.string.home_logout))
-                    }
-                }
-            )
+            TopAppBar(title = { Text(text = stringResource(R.string.assets_title)) })
         },
         modifier = modifier
     ) { innerPadding ->

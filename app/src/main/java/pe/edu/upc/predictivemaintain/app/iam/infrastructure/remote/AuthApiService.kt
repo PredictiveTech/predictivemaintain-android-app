@@ -3,6 +3,7 @@ package pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 interface AuthApiService {
@@ -14,4 +15,9 @@ interface AuthApiService {
 
     @GET("users/me")
     suspend fun getMe(): Response<UserDto>
+
+    @PATCH("users/me")
+    suspend fun updateMe(
+        @Body request: UpdateProfileRequestDto
+    ): Response<UserDto>
 }
