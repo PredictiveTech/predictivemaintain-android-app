@@ -190,4 +190,9 @@
     <string name="create_asset_error_duplicate">Ya existe un activo con este código en tu empresa.</string>
     <string name="create_asset_error_capacity">Alcanzaste el límite de activos de tu plan. Actualiza tu plan para registrar más.</string>
     <string name="create_asset_error_forbidden">No tienes permiso para crear activos.</string>
+    <string name="edit_asset_title">Editar activo</string>
+    <string name="edit_asset_action">Editar</string>
+    <string name="edit_asset_submit">Guardar cambios</string>
+    <string name="edit_asset_error_inactive">Este activo está desactivado y ya no se puede editar.</string>
+    <string name="edit_asset_error_not_found">Este activo ya no existe.</string>
 </resources>

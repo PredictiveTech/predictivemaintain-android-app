@@ -190,4 +190,9 @@
     <string name="create_asset_error_duplicate">An asset with this code already exists in your company.</string>
     <string name="create_asset_error_capacity">Your plan\'s asset limit has been reached. Upgrade your plan to register more assets.</string>
     <string name="create_asset_error_forbidden">You don\'t have permission to create assets.</string>
+    <string name="edit_asset_title">Edit asset</string>
+    <string name="edit_asset_action">Edit</string>
+    <string name="edit_asset_submit">Save changes</string>
+    <string name="edit_asset_error_inactive">This asset is deactivated and can no longer be edited.</string>
+    <string name="edit_asset_error_not_found">This asset no longer exists.</string>
 </resources>

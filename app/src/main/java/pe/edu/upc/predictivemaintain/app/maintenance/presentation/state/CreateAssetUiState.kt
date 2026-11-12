@@ -18,9 +18,16 @@ sealed interface CreateAssetError {
     /** Any other 403: the user lacks the MAINTENANCE_MANAGER role. */
     data object Forbidden : CreateAssetError
 
+    /** 409 ASSET_INACTIVE: a deactivated asset cannot be edited. */
+    data object AssetInactive : CreateAssetError
+
+    /** 404 ASSET_NOT_FOUND. */
+    data object NotFound : CreateAssetError
+
     data class Other(val error: AppError) : CreateAssetError
 }
 
+/** State of the asset form, used by both the create and the edit screens. */
 data class CreateAssetUiState(
     val code: String = "",
     val name: String = "",
@@ -33,5 +40,11 @@ data class CreateAssetUiState(
     val fieldErrors: Map<AssetFormField, FieldError> = emptyMap(),
     val isSubmitting: Boolean = false,
     val submitError: CreateAssetError? = null,
-    val created: Boolean = false
+    /** True once the server accepted the creation / the update. */
+    val saved: Boolean = false,
+    /** Edit mode only: loading the current values. */
+    val isLoading: Boolean = false,
+    val loadError: AppError? = null,
+    /** Edit mode only: the asset's plant, never edited but sent back unchanged. */
+    val plantId: String? = null
 )

@@ -4,6 +4,7 @@ import pe.edu.upc.predictivemaintain.app.core.error.AppError
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Asset
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetChanges
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetDetail
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.NewAsset
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.AssetRepository
@@ -12,6 +13,8 @@ class FakeAssetRepository : AssetRepository {
     var getAssetsResult: Outcome<PageResult<Asset>> = Outcome.Success(PageResult(emptyList(), 0, 0, 0L))
     var getAssetResult: Outcome<AssetDetail> = Outcome.Failure(AppError.Unknown())
     var createAssetResult: Outcome<Asset> = Outcome.Failure(AppError.Unknown())
+    var updateAssetResult: Outcome<AssetDetail> = Outcome.Failure(AppError.Unknown())
+    val updatedRequests = mutableListOf<Pair<String, AssetChanges>>()
     val createdRequests = mutableListOf<NewAsset>()
 
     override suspend fun getAssets(status: String?, page: Int, size: Int): Outcome<PageResult<Asset>> {
@@ -25,5 +28,10 @@ class FakeAssetRepository : AssetRepository {
     override suspend fun createAsset(newAsset: NewAsset): Outcome<Asset> {
         createdRequests += newAsset
         return createAssetResult
+    }
+
+    override suspend fun updateAsset(id: String, changes: AssetChanges): Outcome<AssetDetail> {
+        updatedRequests += id to changes
+        return updateAssetResult
     }
 }

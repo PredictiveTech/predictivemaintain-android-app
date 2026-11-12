@@ -121,7 +121,7 @@ class CreateAssetViewModelTest {
     }
 
     @Test
-    fun `valid submit sends trimmed data and marks created`() = runTest {
+    fun `valid submit sends trimmed data and marks saved`() = runTest {
         repository.createAssetResult = Outcome.Success(createdAsset)
         fillRequired()
         viewModel.onFieldChange(AssetFormField.PRODUCTION_LINE, "  ")
@@ -136,7 +136,7 @@ class CreateAssetViewModelTest {
         assertEquals(-12.5, sent.latitude!!, 0.0)
         assertEquals(-77.03, sent.longitude!!, 0.0)
         val state = viewModel.uiState.value
-        assertTrue(state.created)
+        assertTrue(state.saved)
         assertFalse(state.isSubmitting)
         assertNull(state.submitError)
     }
@@ -162,7 +162,7 @@ class CreateAssetViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(CreateAssetError.DuplicateCode, state.submitError)
         assertEquals(FieldError.DUPLICATE_CODE, state.fieldErrors[AssetFormField.CODE])
-        assertFalse(state.created)
+        assertFalse(state.saved)
         assertFalse(state.isSubmitting)
     }
 
@@ -187,7 +187,7 @@ class CreateAssetViewModelTest {
         val state = viewModel.uiState.value
         assertTrue((state.submitError as CreateAssetError.Other).error is AppError.Network)
         assertEquals("Pump", state.name)
-        assertFalse(state.created)
+        assertFalse(state.saved)
     }
 
     @Test

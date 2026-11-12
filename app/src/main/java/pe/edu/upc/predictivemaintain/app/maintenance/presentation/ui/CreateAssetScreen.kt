@@ -37,6 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.error.AppError
+import pe.edu.upc.predictivemaintain.app.core.ui.ErrorWithRetryComponent
+import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.form.toAssetFormError
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.state.CreateAssetUiState
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.NewAsset
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.Criticality
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.state.AssetFormField
@@ -49,7 +53,6 @@ private val AssetTypeSuggestions = listOf("PUMP", "MOTOR", "COMPRESSOR", "FAN", 
 
 private val CriticalityOptions = listOf(Criticality.LOW, Criticality.MEDIUM, Criticality.HIGH, Criticality.CRITICAL)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAssetScreen(
     viewModel: CreateAssetViewModel,
@@ -58,15 +61,45 @@ fun CreateAssetScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    AssetFormScreen(
+        title = stringResource(R.string.create_asset_title),
+        submitLabel = stringResource(R.string.create_asset_submit),
+        state = state,
+        codeEditable = true,
+        onFieldChange = viewModel::onFieldChange,
+        onCriticalityChange = viewModel::onCriticalityChange,
+        onSubmit = viewModel::submit,
+        onRetryLoad = {},
+        onBackClick = onBackClick,
+        onSaved = onCreated,
+        modifier = modifier
+    )
+}
 
-    LaunchedEffect(state.created) {
-        if (state.created) onCreated()
+/** Form shared by the create and edit screens. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AssetFormScreen(
+    title: String,
+    submitLabel: String,
+    state: CreateAssetUiState,
+    codeEditable: Boolean,
+    onFieldChange: (AssetFormField, String) -> Unit,
+    onCriticalityChange: (Criticality) -> Unit,
+    onSubmit: () -> Unit,
+    onRetryLoad: () -> Unit,
+    onBackClick: () -> Unit,
+    onSaved: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LaunchedEffect(state.saved) {
+        if (state.saved) onSaved()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.create_asset_title)) },
+                title = { Text(text = title) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Text(text = "←", style = MaterialTheme.typography.titleMedium)
@@ -76,6 +109,18 @@ fun CreateAssetScreen(
         },
         modifier = modifier
     ) { innerPadding ->
+        if (state.isLoading) {
+            LoadingComponent(modifier = Modifier.padding(innerPadding))
+            return@Scaffold
+        }
+        if (state.loadError != null) {
+            ErrorWithRetryComponent(
+                message = submitErrorText(state.loadError.toAssetFormError()),
+                onRetry = onRetryLoad,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,15 +134,15 @@ fun CreateAssetScreen(
 
             FormTextField(
                 value = state.code,
-                onValueChange = { viewModel.onFieldChange(AssetFormField.CODE, it) },
+                onValueChange = { onFieldChange(AssetFormField.CODE, it) },
                 label = stringResource(R.string.create_asset_code),
                 error = state.fieldErrors[AssetFormField.CODE],
                 maxLength = NewAsset.CODE_MAX,
-                enabled = enabled
+                enabled = enabled && codeEditable
             )
             FormTextField(
                 value = state.name,
-                onValueChange = { viewModel.onFieldChange(AssetFormField.NAME, it) },
+                onValueChange = { onFieldChange(AssetFormField.NAME, it) },
                 label = stringResource(R.string.create_asset_name),
                 error = state.fieldErrors[AssetFormField.NAME],
                 maxLength = NewAsset.NAME_MAX,
@@ -105,7 +150,7 @@ fun CreateAssetScreen(
             )
             FormTextField(
                 value = state.location,
-                onValueChange = { viewModel.onFieldChange(AssetFormField.LOCATION, it) },
+                onValueChange = { onFieldChange(AssetFormField.LOCATION, it) },
                 label = stringResource(R.string.create_asset_location),
                 error = state.fieldErrors[AssetFormField.LOCATION],
                 maxLength = NewAsset.LOCATION_MAX,
@@ -114,19 +159,19 @@ fun CreateAssetScreen(
 
             AssetTypeField(
                 value = state.assetType,
-                onValueChange = { viewModel.onFieldChange(AssetFormField.ASSET_TYPE, it) },
+                onValueChange = { onFieldChange(AssetFormField.ASSET_TYPE, it) },
                 error = state.fieldErrors[AssetFormField.ASSET_TYPE],
                 enabled = enabled
             )
             CriticalityField(
                 selected = state.criticality,
-                onSelected = viewModel::onCriticalityChange,
+                onSelected = onCriticalityChange,
                 enabled = enabled
             )
 
             FormTextField(
                 value = state.productionLine,
-                onValueChange = { viewModel.onFieldChange(AssetFormField.PRODUCTION_LINE, it) },
+                onValueChange = { onFieldChange(AssetFormField.PRODUCTION_LINE, it) },
                 label = stringResource(R.string.create_asset_production_line),
                 error = state.fieldErrors[AssetFormField.PRODUCTION_LINE],
                 maxLength = NewAsset.PRODUCTION_LINE_MAX,
@@ -141,7 +186,7 @@ fun CreateAssetScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FormTextField(
                     value = state.latitude,
-                    onValueChange = { viewModel.onFieldChange(AssetFormField.LATITUDE, it) },
+                    onValueChange = { onFieldChange(AssetFormField.LATITUDE, it) },
                     label = stringResource(R.string.create_asset_latitude),
                     error = state.fieldErrors[AssetFormField.LATITUDE],
                     enabled = enabled,
@@ -150,7 +195,7 @@ fun CreateAssetScreen(
                 )
                 FormTextField(
                     value = state.longitude,
-                    onValueChange = { viewModel.onFieldChange(AssetFormField.LONGITUDE, it) },
+                    onValueChange = { onFieldChange(AssetFormField.LONGITUDE, it) },
                     label = stringResource(R.string.create_asset_longitude),
                     error = state.fieldErrors[AssetFormField.LONGITUDE],
                     enabled = enabled,
@@ -168,14 +213,14 @@ fun CreateAssetScreen(
             }
 
             Button(
-                onClick = viewModel::submit,
+                onClick = onSubmit,
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (state.isSubmitting) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text(text = stringResource(R.string.create_asset_submit))
+                    Text(text = submitLabel)
                 }
             }
         }
@@ -300,6 +345,8 @@ private fun submitErrorText(error: CreateAssetError): String = when (error) {
     CreateAssetError.DuplicateCode -> stringResource(R.string.create_asset_error_duplicate)
     CreateAssetError.CapacityExceeded -> stringResource(R.string.create_asset_error_capacity)
     CreateAssetError.Forbidden -> stringResource(R.string.create_asset_error_forbidden)
+    CreateAssetError.AssetInactive -> stringResource(R.string.edit_asset_error_inactive)
+    CreateAssetError.NotFound -> stringResource(R.string.edit_asset_error_not_found)
     is CreateAssetError.Other -> when (val e = error.error) {
         is AppError.Api -> e.detail
         is AppError.Network -> stringResource(R.string.error_network)

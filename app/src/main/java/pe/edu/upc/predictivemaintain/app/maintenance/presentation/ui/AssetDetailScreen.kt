@@ -37,7 +37,9 @@ fun AssetDetailScreen(
     viewModel: AssetDetailViewModel = hiltViewModel(),
     sensorPanelViewModel: SensorPanelViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
-    onViewAlertsClick: (String) -> Unit
+    onViewAlertsClick: (String) -> Unit,
+    canEdit: Boolean = false,
+    onEditClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -52,6 +54,14 @@ fun AssetDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Text(text = "←", style = MaterialTheme.typography.titleMedium)
+                    }
+                },
+                actions = {
+                    // An inactive asset cannot be edited (the backend answers 409).
+                    if (canEdit && uiState.asset?.active == true) {
+                        TextButton(onClick = onEditClick) {
+                            Text(text = stringResource(R.string.edit_asset_action))
+                        }
                     }
                 }
             )

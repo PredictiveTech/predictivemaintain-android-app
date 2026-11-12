@@ -37,11 +37,13 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScree
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.CreateAssetScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.EditAssetScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrderDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrdersScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.CreateAssetViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.EditAssetViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrderDetailViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrdersViewModel
 
@@ -169,6 +171,25 @@ fun AppNavigation(
                     onBackClick = { navController.popBackStack() },
                     onViewAlertsClick = { id ->
                         navController.navigate(Screen.Alerts.createRoute(id))
+                    },
+                    canEdit = canCreateAssets,
+                    onEditClick = { navController.navigate(Screen.EditAsset.createRoute(assetId)) }
+                )
+            }
+            composable(
+                route = Screen.EditAsset.route,
+                arguments = listOf(navArgument("assetId") { type = NavType.StringType })
+            ) {
+                val editAssetViewModel: EditAssetViewModel = hiltViewModel()
+                EditAssetScreen(
+                    viewModel = editAssetViewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onSaved = {
+                        // The list shows the name/type/criticality, so it must refresh too. The detail screen
+                        // reloads by itself when it comes back into composition.
+                        runCatching { navController.getBackStackEntry(Screen.Assets.route) }
+                            .getOrNull()?.savedStateHandle?.set(ASSETS_REFRESH_KEY, true)
+                        navController.popBackStack()
                     }
                 )
             }

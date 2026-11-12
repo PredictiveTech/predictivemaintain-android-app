@@ -9,6 +9,7 @@ data class AssetDetail(
     val code: AssetCode,
     val name: String,
     val location: String?,
+    val plantId: String? = null,
     val productionLine: String?,
     val assetType: String,
     val criticality: Criticality,

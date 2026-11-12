@@ -5,6 +5,7 @@ import pe.edu.upc.predictivemaintain.app.core.network.ErrorParser
 import pe.edu.upc.predictivemaintain.app.core.network.safeApiCall
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Asset
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetChanges
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetDetail
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.NewAsset
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.AssetRepository
@@ -34,6 +35,14 @@ class AssetRepositoryImpl @Inject constructor(
     override suspend fun createAsset(newAsset: NewAsset): Outcome<Asset> {
         val request = AssetMapper.toRequestDto(newAsset)
         return when (val apiResult = safeApiCall(errorParser) { assetApiService.createAsset(request) }) {
+            is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun updateAsset(id: String, changes: AssetChanges): Outcome<AssetDetail> {
+        val request = AssetMapper.toRequestDto(changes)
+        return when (val apiResult = safeApiCall(errorParser) { assetApiService.updateAsset(id, request) }) {
             is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
             is Outcome.Failure -> apiResult
         }
