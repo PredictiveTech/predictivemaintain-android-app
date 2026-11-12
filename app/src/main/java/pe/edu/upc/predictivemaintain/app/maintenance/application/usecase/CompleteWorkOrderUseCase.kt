@@ -13,18 +13,11 @@ class CompleteWorkOrderUseCase @Inject constructor(
     suspend operator fun invoke(
         id: WorkOrderId,
         summary: String,
-        expectedVersion: Long,
-        imageUriString: String? = null
+        expectedVersion: Long
     ): Outcome<WorkOrder> {
         val trimmed = summary.trim()
         if (trimmed.isBlank() || trimmed.length > 2000) {
             return Outcome.Failure(AppError.InvalidResponse("summary"))
-        }
-        if (!imageUriString.isNullOrBlank()) {
-            when (val uploadResult = workOrderRepository.uploadAttachment(id, imageUriString)) {
-                is Outcome.Success -> {}
-                is Outcome.Failure -> return Outcome.Failure(uploadResult.error)
-            }
         }
         return workOrderRepository.completeWorkOrder(id, trimmed, expectedVersion)
     }

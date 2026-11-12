@@ -145,4 +145,8 @@
     <string name="orders_photo_gallery">Galería</string>
     <string name="orders_photo_preview">Vista previa de foto</string>
 
+    <string name="orders_camera_permission_required">Se necesita el permiso de cámara para tomar la foto. Habilítalo en Ajustes o elige la foto desde la galería.</string>
+    <string name="orders_evidence_title">Evidencia fotográfica</string>
+    <string name="orders_evidence_empty">Aún no hay evidencia fotográfica.</string>
+    <string name="orders_evidence_load_failed">No se pudo cargar la evidencia fotográfica.</string>
 </resources>

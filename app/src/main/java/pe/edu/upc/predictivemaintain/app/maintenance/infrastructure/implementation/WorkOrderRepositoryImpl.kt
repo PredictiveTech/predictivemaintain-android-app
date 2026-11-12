@@ -2,6 +2,7 @@ package pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementat
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -11,6 +12,7 @@ import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.network.ErrorParser
 import pe.edu.upc.predictivemaintain.app.core.network.safeApiCall
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.iam.domain.repository.SessionRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.WorkOrderRepository
@@ -22,6 +24,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.mapper.EvidenceMapper
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.mapper.WorkOrderMapper
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssignWorkOrderRequestDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.CompleteWorkOrderRequestDto
@@ -175,12 +178,18 @@ class WorkOrderRepositoryImpl @Inject constructor(
     ): Outcome<Unit> {
         return try {
             val uri = Uri.parse(imageUriString)
+            val mimeType = context.contentResolver.getType(uri)
+                ?.takeIf { it.startsWith("image/") }
+                ?: return Outcome.Failure(AppError.InvalidResponse("mimeType"))
+            val mediaType = mimeType.toMediaTypeOrNull()
+                ?: return Outcome.Failure(AppError.InvalidResponse("mimeType"))
             val bytes = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 inputStream.readBytes()
             } ?: return Outcome.Failure(AppError.InvalidResponse("Invalid image URI"))
 
-            val requestBody = bytes.toRequestBody("image/*".toMediaTypeOrNull())
-            val part = MultipartBody.Part.createFormData("file", "attachment.jpg", requestBody)
+            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
+            val requestBody = bytes.toRequestBody(mediaType)
+            val part = MultipartBody.Part.createFormData("file", "attachment.$extension", requestBody)
 
             when (val result = safeApiCall(errorParser) {
                 apiService.uploadAttachment(id.value, part)
@@ -190,6 +199,13 @@ class WorkOrderRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Outcome.Failure(AppError.Unknown(e))
+        }
+    }
+
+    override suspend fun listAttachments(id: WorkOrderId): Outcome<List<Evidence>> {
+        return when (val result = safeApiCall(errorParser) { apiService.getAttachments(id.value) }) {
+            is Outcome.Success -> EvidenceMapper.toDomain(result.data)
+            is Outcome.Failure -> result
         }
     }
 }

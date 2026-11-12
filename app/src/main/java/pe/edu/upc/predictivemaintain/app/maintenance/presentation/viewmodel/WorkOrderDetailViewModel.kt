@@ -17,8 +17,10 @@ import pe.edu.upc.predictivemaintain.app.maintenance.application.policy.WorkOrde
 import pe.edu.upc.predictivemaintain.app.maintenance.application.sync.SyncCoordinator
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.AssignWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.CompleteWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderAttachmentsUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.StartWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.UploadWorkOrderAttachmentUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.Actor
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
@@ -32,6 +34,8 @@ class WorkOrderDetailViewModel @Inject constructor(
     private val assignWorkOrderUseCase: AssignWorkOrderUseCase,
     private val startWorkOrderUseCase: StartWorkOrderUseCase,
     private val completeWorkOrderUseCase: CompleteWorkOrderUseCase,
+    private val uploadWorkOrderAttachmentUseCase: UploadWorkOrderAttachmentUseCase,
+    private val getWorkOrderAttachmentsUseCase: GetWorkOrderAttachmentsUseCase,
     private val listTechniciansUseCase: ListTechniciansUseCase,
     private val workOrderActionPolicy: WorkOrderActionPolicy,
     private val sessionRepository: SessionRepository,
@@ -99,6 +103,7 @@ class WorkOrderDetailViewModel @Inject constructor(
                             errorMessage = null
                         )
                     }
+                    refreshAttachments(order.id)
                 }
                 is Outcome.Failure -> {
                     _uiState.update {
@@ -146,13 +151,42 @@ class WorkOrderDetailViewModel @Inject constructor(
         val photoUri = _uiState.value.selectedPhotoUri
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, errorMessage = null, successMessage = null) }
+
+            if (!photoUri.isNullOrBlank()) {
+                when (val upload = uploadWorkOrderAttachmentUseCase(order.id, photoUri)) {
+                    is Outcome.Success -> {
+                        // The photo is now on the server: drop the selection so that retrying the completion
+                        // (e.g. after a 409) never uploads it a second time.
+                        _uiState.update { it.copy(selectedPhotoUri = null) }
+                        refreshAttachments(order.id)
+                    }
+                    is Outcome.Failure -> {
+                        _uiState.update {
+                            it.copy(isSubmitting = false, errorMessage = formatError(upload.error))
+                        }
+                        return@launch
+                    }
+                }
+            }
+
             val result = completeWorkOrderUseCase(
                 id = order.id,
                 summary = summary,
-                expectedVersion = order.version,
-                imageUriString = photoUri
+                expectedVersion = order.version
             )
+            if (result is Outcome.Success) {
+                _uiState.update { it.copy(selectedPhotoUri = null) }
+            }
             handleMutationResult(result, order.id, "Work order completed successfully.")
+        }
+    }
+
+    private suspend fun refreshAttachments(orderId: WorkOrderId) {
+        when (val result = getWorkOrderAttachmentsUseCase(orderId)) {
+            is Outcome.Success -> _uiState.update {
+                it.copy(attachments = result.data, attachmentsLoadFailed = false)
+            }
+            is Outcome.Failure -> _uiState.update { it.copy(attachmentsLoadFailed = true) }
         }
     }
 

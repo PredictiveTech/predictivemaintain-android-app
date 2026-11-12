@@ -42,9 +42,11 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import pe.edu.upc.predictivemaintain.app.BuildConfig
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.ui.LoadingComponent
 import pe.edu.upc.predictivemaintain.app.core.ui.StatusChip
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrderDetailViewModel
 import java.io.File
 
@@ -162,6 +164,12 @@ fun WorkOrderDetailScreen(
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(24.dp))
+                    EvidenceSection(
+                        attachments = uiState.attachments,
+                        loadFailed = uiState.attachmentsLoadFailed
+                    )
+
                     if (uiState.canAssign) {
                         Spacer(modifier = Modifier.height(24.dp))
                         val buttonText = if (order.assignedUserId == null) {
@@ -254,6 +262,7 @@ fun WorkOrderDetailScreen(
             val context = LocalContext.current
             var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
             var showPhotoSourceDialog by remember { mutableStateOf(false) }
+            var cameraPermissionDenied by remember { mutableStateOf(false) }
 
             val cameraLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.TakePicture()
@@ -266,6 +275,7 @@ fun WorkOrderDetailScreen(
             val cameraPermissionLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission()
             ) { isGranted ->
+                cameraPermissionDenied = !isGranted
                 if (isGranted) {
                     try {
                         val photoFile = File(context.cacheDir, "work_order_${System.currentTimeMillis()}.jpg")
@@ -289,7 +299,10 @@ fun WorkOrderDetailScreen(
             }
 
             AlertDialog(
-                onDismissRequest = { showCompleteDialog = false },
+                onDismissRequest = {
+                    showCompleteDialog = false
+                    viewModel.setPhotoUri(null)
+                },
                 title = { Text(text = stringResource(R.string.orders_complete_dialog_title)) },
                 text = {
                     Column(
@@ -320,6 +333,15 @@ fun WorkOrderDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(text = stringResource(R.string.orders_attach_photo))
+                        }
+
+                        if (cameraPermissionDenied) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.orders_camera_permission_required),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
                         }
 
                         if (!uiState.selectedPhotoUri.isNullOrBlank()) {
@@ -353,7 +375,10 @@ fun WorkOrderDetailScreen(
                     }
                 },
                 dismissButton = {
-                    Button(onClick = { showCompleteDialog = false }) {
+                    Button(onClick = {
+                        showCompleteDialog = false
+                        viewModel.setPhotoUri(null)
+                    }) {
                         Text(text = stringResource(R.string.orders_cancel))
                     }
                 }
@@ -399,3 +424,44 @@ fun WorkOrderDetailScreen(
         }
     }
 }
+
+@Composable
+private fun EvidenceSection(
+    attachments: List<Evidence>,
+    loadFailed: Boolean
+) {
+    Text(
+        text = stringResource(R.string.orders_evidence_title),
+        style = MaterialTheme.typography.titleMedium
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    when {
+        loadFailed -> Text(
+            text = stringResource(R.string.orders_evidence_load_failed),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+        attachments.isEmpty() -> Text(
+            text = stringResource(R.string.orders_evidence_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The images are protected: the app-wide Coil ImageLoader (see PredictiveMaintainApplication)
+            // sends the Bearer token through the OkHttp client's AuthInterceptor.
+            attachments.forEach { evidence ->
+                AsyncImage(
+                    model = evidenceImageUrl(evidence),
+                    contentDescription = stringResource(R.string.orders_evidence_title),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+    }
+}
+
+private fun evidenceImageUrl(evidence: Evidence): String =
+    "${BuildConfig.BASE_URL}work-orders/${evidence.workOrderId.value}/attachments/${evidence.id.value}"

@@ -14,6 +14,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -30,6 +32,8 @@ import pe.edu.upc.predictivemaintain.app.iam.fakes.FakeUserDirectoryRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.application.policy.WorkOrderActionPolicy
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.AssignWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.CompleteWorkOrderUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderAttachmentsUseCase
+import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.UploadWorkOrderAttachmentUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.GetWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.application.usecase.StartWorkOrderUseCase
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
@@ -37,6 +41,8 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertSeverity
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.EvidenceId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderStatus
 import pe.edu.upc.predictivemaintain.app.maintenance.fakes.FakeWorkOrderRepository
@@ -102,6 +108,8 @@ class WorkOrderDetailViewModelTest {
             assignWorkOrderUseCase = assignWorkOrderUseCase,
             startWorkOrderUseCase = startWorkOrderUseCase,
             completeWorkOrderUseCase = completeWorkOrderUseCase,
+            uploadWorkOrderAttachmentUseCase = UploadWorkOrderAttachmentUseCase(fakeWorkOrderRepository),
+            getWorkOrderAttachmentsUseCase = GetWorkOrderAttachmentsUseCase(fakeWorkOrderRepository),
             listTechniciansUseCase = listTechniciansUseCase,
             workOrderActionPolicy = workOrderActionPolicy,
             sessionRepository = fakeSessionRepository,
@@ -237,5 +245,70 @@ class WorkOrderDetailViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals("Not assigned technician", state.errorMessage)
+    }
+
+    @Test
+    fun `complete uploads the photo once and does not re-upload when completion is retried`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        val inProgress = sampleOrder.copy(
+            assignedUserId = TechnicianId("tech-1"),
+            status = WorkOrderStatus.IN_PROGRESS
+        )
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(inProgress)
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setPhotoUri("content://photo/1")
+        fakeWorkOrderRepository.completeWorkOrderResult =
+            Outcome.Failure(AppError.Api(httpStatus = 500, code = "ERR", detail = "boom"))
+        viewModel.completeWorkOrder("done")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, fakeWorkOrderRepository.uploadAttachmentCalls)
+        assertNull(viewModel.uiState.value.selectedPhotoUri)
+
+        fakeWorkOrderRepository.completeWorkOrderResult =
+            Outcome.Success(inProgress.copy(status = WorkOrderStatus.COMPLETED, summary = "done"))
+        viewModel.completeWorkOrder("done")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, fakeWorkOrderRepository.uploadAttachmentCalls)
+        assertEquals(WorkOrderStatus.COMPLETED, viewModel.uiState.value.order?.status)
+    }
+
+    @Test
+    fun `complete does not complete the order when the photo upload fails and keeps the selection`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        val inProgress = sampleOrder.copy(
+            assignedUserId = TechnicianId("tech-1"),
+            status = WorkOrderStatus.IN_PROGRESS
+        )
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(inProgress)
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setPhotoUri("content://photo/1")
+        fakeWorkOrderRepository.uploadAttachmentResult =
+            Outcome.Failure(AppError.Api(httpStatus = 413, code = "TOO_LARGE", detail = "too large"))
+        viewModel.completeWorkOrder("done")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("too large", viewModel.uiState.value.errorMessage)
+        assertEquals("content://photo/1", viewModel.uiState.value.selectedPhotoUri)
+        assertEquals(WorkOrderStatus.IN_PROGRESS, viewModel.uiState.value.order?.status)
+    }
+
+    @Test
+    fun `loading an order also loads its attachments`() = runTest {
+        fakeSessionRepository.saveSession(technicianSession)
+        fakeWorkOrderRepository.getWorkOrderResult = Outcome.Success(sampleOrder)
+        val evidence = Evidence(EvidenceId("ev-1"), WorkOrderId("wo-1"), "image/jpeg", Instant.now())
+        fakeWorkOrderRepository.listAttachmentsResult = Outcome.Success(listOf(evidence))
+
+        viewModel.loadOrder("wo-1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(evidence), viewModel.uiState.value.attachments)
+        assertFalse(viewModel.uiState.value.attachmentsLoadFailed)
     }
 }

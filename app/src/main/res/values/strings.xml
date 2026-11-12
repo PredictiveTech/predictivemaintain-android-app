@@ -145,4 +145,8 @@
     <string name="orders_photo_gallery">Gallery</string>
     <string name="orders_photo_preview">Photo preview</string>
 
+    <string name="orders_camera_permission_required">Camera permission is required to take a photo. Allow it in Settings or pick the photo from the gallery.</string>
+    <string name="orders_evidence_title">Photographic evidence</string>
+    <string name="orders_evidence_empty">No photographic evidence yet.</string>
+    <string name="orders_evidence_load_failed">Could not load the photographic evidence.</string>
 </resources>

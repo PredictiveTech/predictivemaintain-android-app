@@ -2,6 +2,7 @@ package pe.edu.upc.predictivemaintain.app.maintenance.domain.repository
 
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
@@ -40,4 +41,6 @@ interface WorkOrderRepository {
         id: WorkOrderId,
         imageUriString: String
     ): Outcome<Unit>
+
+    suspend fun listAttachments(id: WorkOrderId): Outcome<List<Evidence>>
 }

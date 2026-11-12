@@ -1,6 +1,7 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.state
 
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.Technician
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Evidence
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.WorkOrder
 
 data class WorkOrderDetailUiState(
@@ -15,6 +16,8 @@ data class WorkOrderDetailUiState(
     val isManager: Boolean = false,
     val isPendingSync: Boolean = false,
     val selectedPhotoUri: String? = null,
+    val attachments: List<Evidence> = emptyList(),
+    val attachmentsLoadFailed: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
