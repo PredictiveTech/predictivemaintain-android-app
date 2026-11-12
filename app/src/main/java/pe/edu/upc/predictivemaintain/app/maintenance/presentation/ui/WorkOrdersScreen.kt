@@ -1,5 +1,7 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui
 
+import pe.edu.upc.predictivemaintain.app.core.ui.ScreenHeader
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import pe.edu.upc.predictivemaintain.app.core.ui.ColoredStatusChip
+import pe.edu.upc.predictivemaintain.app.core.ui.AccentCard
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -134,9 +140,7 @@ fun WorkOrdersScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = title) }
-            )
+            ScreenHeader(title = title, icon = Icons.AutoMirrored.Filled.List)
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
@@ -237,47 +241,32 @@ private fun WorkOrderCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+    val statusTone = workOrderStatusTone(order.status)
+    AccentCard(
+        accent = statusTone.accent,
+        icon = Icons.Filled.Build,
+        title = order.assetName,
+        subtitle = order.assetCode,
+        onClick = onClick,
+        modifier = modifier,
+        trailing = { ColoredStatusChip(text = localizedStatus(order.status), tone = statusTone) }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "${order.assetCode} - ${order.assetName}",
-                style = MaterialTheme.typography.titleMedium
-            )
+        ColoredStatusChip(text = localizedSeverity(order.severity), tone = severityTone(order.severity))
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                StatusChip(text = localizedSeverity(order.severity))
-                StatusChip(text = localizedStatus(order.status))
-            }
+        Text(
+            text = orderAgeText(order.openedAt),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val ageText = orderAgeText(order.openedAt)
-            Text(
-                text = ageText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            val techDisplay = technicianName ?: stringResource(R.string.orders_unassigned)
-            Text(
-                text = stringResource(R.string.orders_assigned_technician, techDisplay),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        val techDisplay = technicianName ?: stringResource(R.string.orders_unassigned)
+        Text(
+            text = stringResource(R.string.orders_assigned_technician, techDisplay),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

@@ -1,5 +1,6 @@
 package pe.edu.upc.predictivemaintain.app.iam.presentation.ui
 
+import pe.edu.upc.predictivemaintain.app.core.ui.ScreenHeader
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,7 +57,7 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(text = stringResource(R.string.profile_title)) }) },
+        topBar = { ScreenHeader(title = stringResource(R.string.profile_title), icon = Icons.Filled.Person) },
         modifier = modifier
     ) { innerPadding ->
         Column(

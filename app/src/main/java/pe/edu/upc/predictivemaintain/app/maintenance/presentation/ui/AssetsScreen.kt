@@ -1,11 +1,21 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui
 
+import pe.edu.upc.predictivemaintain.app.core.ui.ScreenHeader
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.clickable
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Asset
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import pe.edu.upc.predictivemaintain.app.core.ui.AccentCard
 import pe.edu.upc.predictivemaintain.app.core.ui.ColoredStatusChip
 import pe.edu.upc.predictivemaintain.app.core.ui.StatusTone
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetStatus
@@ -63,7 +73,7 @@ fun AssetsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(text = stringResource(R.string.assets_title)) })
+            ScreenHeader(title = stringResource(R.string.assets_title), icon = Icons.Filled.Settings)
         },
         floatingActionButton = {
             if (canCreate) {
@@ -139,52 +149,7 @@ fun AssetsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(uiState.items, key = { it.id.value }) { asset ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onAssetClick(asset.id.value) },
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = asset.name,
-                                                style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onBackground
-                                            )
-                                            Text(
-                                                text = asset.code.value,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFF94A3B8)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        AssetStatusChip(status = asset.status)
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = stringResource(R.string.asset_type, asset.assetType),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    if (!asset.location.isNullOrBlank()) {
-                                        Text(
-                                            text = stringResource(R.string.asset_location, asset.location),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
+                            AssetCard(asset = asset, onClick = { onAssetClick(asset.id.value) })
                         }
 
                         if (uiState.hasMore) {
@@ -209,11 +174,36 @@ fun AssetsScreen(
 }
 
 @Composable
+private fun AssetCard(asset: Asset, onClick: () -> Unit) {
+    AccentCard(
+        accent = assetStatusTone(asset.status).accent,
+        icon = assetTypeIcon(asset.assetType),
+        title = asset.name,
+        subtitle = asset.code.value,
+        onClick = onClick,
+        trailing = { AssetStatusChip(status = asset.status) }
+    ) {
+        Text(
+            text = stringResource(R.string.asset_type, asset.assetType),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (!asset.location.isNullOrBlank()) {
+            Text(
+                text = stringResource(R.string.asset_location, asset.location),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 private fun AssetStatusChip(status: AssetStatus) {
     val (label, tone) = when (status) {
         AssetStatus.IN_ALERT -> R.string.status_in_alert to StatusTone.DANGER
         AssetStatus.OPERATIONAL -> R.string.status_operational to StatusTone.SUCCESS
-        AssetStatus.NO_COMMUNICATION -> R.string.status_no_communication to StatusTone.NEUTRAL
+        AssetStatus.NO_COMMUNICATION -> R.string.status_no_communication to StatusTone.INFO
         AssetStatus.INACTIVE -> R.string.status_inactive to StatusTone.NEUTRAL
         AssetStatus.UNKNOWN -> R.string.status_unknown to StatusTone.NEUTRAL
     }

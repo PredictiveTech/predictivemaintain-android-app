@@ -1,5 +1,6 @@
 package pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui
 
+import pe.edu.upc.predictivemaintain.app.core.ui.ScreenHeader
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertSeverity
+import pe.edu.upc.predictivemaintain.app.core.ui.StatusTone
+import pe.edu.upc.predictivemaintain.app.core.ui.ColoredStatusChip
+import pe.edu.upc.predictivemaintain.app.core.ui.AccentCard
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,7 +84,7 @@ fun AlertsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(text = stringResource(R.string.alerts_title)) })
+            ScreenHeader(title = stringResource(R.string.alerts_title), icon = Icons.Filled.Warning)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -147,7 +154,9 @@ fun AlertsScreen(
                     ) {
                         items(uiState.items, key = { it.id.value }) { alert ->
                             AlertCard(
-                                assetLabel = "${alert.assetCode} - ${alert.assetName}",
+                                assetName = alert.assetName,
+                                assetCode = alert.assetCode,
+                                severity = alert.severity,
                                 severityLabel = severityLabel(alert.severity.name),
                                 statusLabel = statusLabel(alert.status.name),
                                 observedText = alert.diagnostic?.let { diagnostic ->
@@ -193,7 +202,9 @@ fun AlertsScreen(
 
 @Composable
 private fun AlertCard(
-    assetLabel: String,
+    assetName: String,
+    assetCode: String,
+    severity: AlertSeverity,
     severityLabel: String,
     statusLabel: String,
     observedText: String?,
@@ -201,56 +212,41 @@ private fun AlertCard(
     ageText: String,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    val tone = severityTone(severity)
+    AccentCard(
+        accent = tone.accent,
+        icon = Icons.Filled.Warning,
+        title = assetName,
+        subtitle = assetCode,
+        onClick = onClick,
+        trailing = { ColoredStatusChip(text = severityLabel, tone = tone) }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        if (observedText != null) {
+            Text(
+                text = observedText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (rangeText != null) {
+            Text(
+                text = rangeText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = assetLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                StatusChip(text = severityLabel)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            if (observedText != null) {
-                Text(
-                    text = observedText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (rangeText != null) {
-                Text(
-                    text = rangeText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                StatusChip(text = statusLabel)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = ageText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            ColoredStatusChip(text = statusLabel, tone = StatusTone.NEUTRAL)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = ageText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

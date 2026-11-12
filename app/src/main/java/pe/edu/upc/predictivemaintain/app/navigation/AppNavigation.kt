@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,6 +51,13 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.Work
 
 private const val ASSETS_REFRESH_KEY = "assets_refresh"
 
+// Brand bottom bar. Contrast on the navy background: inactive #CBD5E1 ~12:1, active #0EA5E9 ~6:1,
+// active on its indicator pill ~5:1.
+private val NavBarBackground = Color(0xFF0F172A)
+private val NavBarActive = Color(0xFF0EA5E9)
+private val NavBarInactive = Color(0xFFCBD5E1)
+private val NavBarIndicator = Color(0xFF1E293B)
+
 @Composable
 fun AppNavigation(
     session: AuthSession?
@@ -64,7 +73,7 @@ fun AppNavigation(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(containerColor = NavBarBackground) {
                     destinations.forEach { destination ->
                         val selected = currentRoute == destination.screen.route
                         NavigationBarItem(
@@ -81,6 +90,13 @@ fun AppNavigation(
                                 }
                             },
                             icon = { Icon(imageVector = destination.icon, contentDescription = null) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = NavBarActive,
+                                selectedTextColor = NavBarActive,
+                                unselectedIconColor = NavBarInactive,
+                                unselectedTextColor = NavBarInactive,
+                                indicatorColor = NavBarIndicator
+                            ),
                             label = { Text(text = stringResource(destination.titleResId)) }
                         )
                     }
