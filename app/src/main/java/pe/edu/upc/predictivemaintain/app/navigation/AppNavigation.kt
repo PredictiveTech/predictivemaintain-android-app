@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -23,9 +24,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.LoginScreen
+import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.ProfileScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
-import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.HomeViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.LoginViewModel
+import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.ProfileViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.SplashViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
@@ -68,7 +70,7 @@ fun AppNavigation(
                                     }
                                 }
                             },
-                            icon = { },
+                            icon = { Icon(imageVector = destination.icon, contentDescription = null) },
                             label = { Text(text = stringResource(destination.titleResId)) }
                         )
                     }
@@ -110,18 +112,21 @@ fun AppNavigation(
             }
             composable(Screen.Assets.route) {
                 val assetsViewModel: AssetsViewModel = hiltViewModel()
-                val homeViewModel: HomeViewModel = hiltViewModel()
                 AssetsScreen(
                     viewModel = assetsViewModel,
-                    onLogout = {
-                        homeViewModel.logout {
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                            }
-                        }
-                    },
                     onAssetClick = { assetId ->
                         navController.navigate(Screen.AssetDetail.createRoute(assetId))
+                    }
+                )
+            }
+            composable(Screen.Profile.route) {
+                val profileViewModel: ProfileViewModel = hiltViewModel()
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onLoggedOut = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                        }
                     }
                 )
             }

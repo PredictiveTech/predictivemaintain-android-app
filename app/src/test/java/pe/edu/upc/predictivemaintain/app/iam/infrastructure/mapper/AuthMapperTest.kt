@@ -144,4 +144,31 @@ class AuthMapperTest {
         }
         assertTrue(rejected)
     }
+
+    @Test
+    fun `toRequestDto carries the display name unchanged`() {
+        val dto = AuthMapper.toRequestDto(DisplayName("Ana Pérez"))
+
+        assertEquals("Ana Pérez", dto.displayName)
+    }
+
+    @Test
+    fun `user dto of an updated profile maps to the domain with all fields`() {
+        val result = AuthMapper.toDomain(
+            userDto(displayName = "Ana Pérez", roles = listOf("TECHNICIAN", "OPERATOR"))
+        )
+
+        assertTrue(result is Outcome.Success)
+        val profile = (result as Outcome.Success).data
+        assertEquals("Ana Pérez", profile.displayName.value)
+        assertEquals(listOf(Role.TECHNICIAN, Role.OPERATOR), profile.roles)
+    }
+
+    @Test
+    fun `blank display name in the response is an InvalidResponse`() {
+        val result = AuthMapper.toDomain(userDto(displayName = "  "))
+
+        assertTrue(result is Outcome.Failure)
+        assertEquals(AppError.InvalidResponse("displayName"), (result as Outcome.Failure).error)
+    }
 }

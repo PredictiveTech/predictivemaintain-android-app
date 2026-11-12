@@ -149,4 +149,21 @@
     <string name="orders_evidence_title">Evidencia fotográfica</string>
     <string name="orders_evidence_empty">Aún no hay evidencia fotográfica.</string>
     <string name="orders_evidence_load_failed">No se pudo cargar la evidencia fotográfica.</string>
+    <string name="profile_title">Perfil</string>
+    <string name="profile_email">Correo</string>
+    <string name="profile_display_name">Nombre para mostrar</string>
+    <string name="profile_display_name_blank">El nombre no puede estar vacío</string>
+    <string name="profile_roles">Roles</string>
+    <string name="profile_save">Guardar</string>
+    <string name="profile_saved">Perfil actualizado</string>
+    <string name="profile_offline">Sin conexión: se muestran datos guardados. No se puede editar.</string>
+    <string name="error_session_expired">Sesión expirada.</string>
+    <string name="role_maintenance_manager">Jefe de mantenimiento</string>
+    <string name="role_technician">Técnico</string>
+    <string name="role_operator">Operador</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_app_info">Información de la app</string>
+    <string name="profile_app_name">Aplicación</string>
+    <string name="profile_app_version">Versión</string>
 </resources>

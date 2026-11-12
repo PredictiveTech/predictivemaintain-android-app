@@ -11,6 +11,7 @@ import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.TenantId
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.UserId
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.LoginResponseDto
+import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UpdateProfileRequestDto
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.remote.UserDto
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -47,6 +48,9 @@ object AuthMapper {
             roles = field("roles") { parseRoles(dto.roles) }
         )
     }
+
+    fun toRequestDto(displayName: DisplayName): UpdateProfileRequestDto =
+        UpdateProfileRequestDto(displayName = displayName.value)
 
     /**
      * Converts the server's role names. An unknown name or an empty list throws IllegalArgumentException,

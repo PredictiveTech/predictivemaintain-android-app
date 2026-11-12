@@ -17,6 +17,9 @@ class FakeAuthRepository : AuthRepository {
 
     var loginResult: Outcome<AuthSession>? = null
     var fetchProfileResult: Outcome<UserProfile>? = null
+    var updateProfileResult: Outcome<UserProfile>? = null
+    var lastUpdatedDisplayName: DisplayName? = null
+    var updateProfileCalls = 0
 
     var lastLoginEmail: Email? = null
     var lastLoginPassword: Password? = null
@@ -42,6 +45,21 @@ class FakeAuthRepository : AuthRepository {
                 tenantId = TenantId("tenant-456"),
                 email = Email("operator@plant.com"),
                 displayName = DisplayName("Test User"),
+                active = true,
+                roles = listOf(Role.MAINTENANCE_MANAGER)
+            )
+        )
+    }
+
+    override suspend fun updateProfile(displayName: DisplayName): Outcome<UserProfile> {
+        updateProfileCalls++
+        lastUpdatedDisplayName = displayName
+        return updateProfileResult ?: Outcome.Success(
+            UserProfile(
+                id = UserId("user-123"),
+                tenantId = TenantId("tenant-456"),
+                email = Email("operator@plant.com"),
+                displayName = displayName,
                 active = true,
                 roles = listOf(Role.MAINTENANCE_MANAGER)
             )
