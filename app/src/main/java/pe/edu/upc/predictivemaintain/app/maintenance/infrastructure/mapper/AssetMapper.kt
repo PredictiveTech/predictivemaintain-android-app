@@ -4,7 +4,9 @@ import pe.edu.upc.predictivemaintain.app.core.error.AppError
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Asset
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetChanges
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetDetail
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.NewAsset
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetCode
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AssetStatus
@@ -12,6 +14,8 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.Critical
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssetDetailDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssetDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssetPageDto
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.CreateAssetRequestDto
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.UpdateAssetRequestDto
 
 object AssetMapper {
 
@@ -45,6 +49,7 @@ object AssetMapper {
                 dto.name
             },
             location = dto.location,
+            plantId = dto.plantId,
             productionLine = dto.productionLine,
             assetType = field("assetType") {
                 require(dto.assetType.isNotBlank()) { "Asset type cannot be blank" }
@@ -56,6 +61,28 @@ object AssetMapper {
             active = dto.active
         )
     }
+
+    fun toRequestDto(newAsset: NewAsset): CreateAssetRequestDto = CreateAssetRequestDto(
+        code = newAsset.code,
+        name = newAsset.name,
+        location = newAsset.location,
+        assetType = newAsset.assetType,
+        criticality = newAsset.criticality.name,
+        productionLine = newAsset.productionLine,
+        latitude = newAsset.latitude,
+        longitude = newAsset.longitude
+    )
+
+    fun toRequestDto(changes: AssetChanges): UpdateAssetRequestDto = UpdateAssetRequestDto(
+        name = changes.name,
+        location = changes.location,
+        assetType = changes.assetType,
+        criticality = changes.criticality.name,
+        plantId = changes.plantId,
+        productionLine = changes.productionLine,
+        latitude = changes.latitude,
+        longitude = changes.longitude
+    )
 
     fun toDomain(dto: AssetPageDto): Outcome<PageResult<Asset>> = mapping {
         val mappedItems = dto.items.map { itemDto ->

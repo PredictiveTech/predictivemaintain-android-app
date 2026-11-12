@@ -8,6 +8,7 @@ data class AssetDetailDto(
     val code: String,
     val name: String,
     val location: String? = null,
+    val plantId: String? = null,
     val productionLine: String? = null,
     val assetType: String,
     val criticality: String? = null,

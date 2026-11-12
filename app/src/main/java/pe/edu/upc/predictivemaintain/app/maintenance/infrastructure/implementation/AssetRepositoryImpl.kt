@@ -5,7 +5,9 @@ import pe.edu.upc.predictivemaintain.app.core.network.ErrorParser
 import pe.edu.upc.predictivemaintain.app.core.network.safeApiCall
 import pe.edu.upc.predictivemaintain.app.core.paging.PageResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.Asset
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetChanges
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.AssetDetail
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.entity.NewAsset
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.AssetRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.mapper.AssetMapper
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.AssetApiService
@@ -25,6 +27,29 @@ class AssetRepositoryImpl @Inject constructor(
 
     override suspend fun getAsset(id: String): Outcome<AssetDetail> {
         return when (val apiResult = safeApiCall(errorParser) { assetApiService.getAsset(id) }) {
+            is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun createAsset(newAsset: NewAsset): Outcome<Asset> {
+        val request = AssetMapper.toRequestDto(newAsset)
+        return when (val apiResult = safeApiCall(errorParser) { assetApiService.createAsset(request) }) {
+            is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun updateAsset(id: String, changes: AssetChanges): Outcome<AssetDetail> {
+        val request = AssetMapper.toRequestDto(changes)
+        return when (val apiResult = safeApiCall(errorParser) { assetApiService.updateAsset(id, request) }) {
+            is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
+            is Outcome.Failure -> apiResult
+        }
+    }
+
+    override suspend fun deactivateAsset(id: String, force: Boolean): Outcome<AssetDetail> {
+        return when (val apiResult = safeApiCall(errorParser) { assetApiService.deactivateAsset(id, force) }) {
             is Outcome.Success -> AssetMapper.toDomain(apiResult.data)
             is Outcome.Failure -> apiResult
         }
