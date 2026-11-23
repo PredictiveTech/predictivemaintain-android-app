@@ -25,7 +25,11 @@ import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.Pendin
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.RoomPendingOperationQueue
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderDao
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncApiService
+import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.ReportRepository
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementation.ReportRepositoryImpl
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.ReportApiService
 import retrofit2.Retrofit
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -52,6 +56,12 @@ abstract class MaintenanceModule {
 
     @Binds
     @Singleton
+    abstract fun bindReportRepository(
+        impl: ReportRepositoryImpl
+    ): ReportRepository
+
+    @Binds
+    @Singleton
     abstract fun bindSyncRepository(
         impl: SyncRepositoryImpl
     ): SyncRepository
@@ -63,6 +73,16 @@ abstract class MaintenanceModule {
     ): PendingOperationQueue
 
     companion object {
+        @Provides
+        @Singleton
+        fun provideClock(): Clock = Clock.systemDefaultZone()
+
+        @Provides
+        @Singleton
+        fun provideReportApiService(retrofit: Retrofit): ReportApiService {
+            return retrofit.create(ReportApiService::class.java)
+        }
+
         @Provides
         @Singleton
         fun provideMaintenanceDatabase(@ApplicationContext context: Context): MaintenanceDatabase =

@@ -35,6 +35,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -66,6 +68,8 @@ fun AssetsScreen(
     onAssetClick: (String) -> Unit,
     canCreate: Boolean = false,
     onCreateClick: () -> Unit = {},
+    canCompare: Boolean = false,
+    onCompareClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -73,7 +77,20 @@ fun AssetsScreen(
 
     Scaffold(
         topBar = {
-            ScreenHeader(title = stringResource(R.string.assets_title), icon = Icons.Filled.Settings)
+            ScreenHeader(
+                title = stringResource(R.string.assets_title),
+                icon = Icons.Filled.Settings,
+                actions = {
+                    if (canCompare) {
+                        IconButton(onClick = onCompareClick) {
+                            Icon(
+                                imageVector = Icons.Filled.CompareArrows,
+                                contentDescription = stringResource(R.string.compare_open)
+                            )
+                        }
+                    }
+                }
+            )
         },
         floatingActionButton = {
             if (canCreate) {

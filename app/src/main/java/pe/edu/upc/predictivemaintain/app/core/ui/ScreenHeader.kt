@@ -3,6 +3,7 @@ package pe.edu.upc.predictivemaintain.app.core.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -26,7 +27,8 @@ import androidx.compose.ui.unit.dp
 fun ScreenHeader(
     title: String,
     icon: ImageVector,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     Column(modifier = modifier) {
         TopAppBar(
@@ -47,7 +49,8 @@ fun ScreenHeader(
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
-            }
+            },
+            actions = actions
         )
         HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.primary)
     }

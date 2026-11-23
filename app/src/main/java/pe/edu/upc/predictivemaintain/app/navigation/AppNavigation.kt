@@ -36,6 +36,8 @@ import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.ProfileViewM
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.SplashViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetAvailabilityScreen
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetComparisonScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.CreateAssetScreen
@@ -43,6 +45,8 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.EditAssetSc
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrderDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.WorkOrdersScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AlertsViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetAvailabilityViewModel
+import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetComparisonViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.AssetsViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.CreateAssetViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.EditAssetViewModel
@@ -67,6 +71,8 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("?")
 
     val canCreateAssets = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
+    // Reports (US-14, US-15, US-16) are for the Maintenance Manager, like asset creation.
+    val canViewReports = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
     val destinations = session?.let { destinationsFor(it.roles) } ?: emptyList()
     val showBottomBar = session != null && destinations.any { it.screen.route == currentRoute }
 
@@ -150,6 +156,8 @@ fun AppNavigation(
                     viewModel = assetsViewModel,
                     canCreate = canCreateAssets,
                     onCreateClick = { navController.navigate(Screen.CreateAsset.route) },
+                    canCompare = canViewReports,
+                    onCompareClick = { navController.navigate(Screen.AssetComparison.route) },
                     onAssetClick = { assetId ->
                         navController.navigate(Screen.AssetDetail.createRoute(assetId))
                     }
@@ -189,6 +197,10 @@ fun AppNavigation(
                         navController.navigate(Screen.Alerts.createRoute(id))
                     },
                     canManage = canCreateAssets,
+                    canViewReports = canViewReports,
+                    onViewAvailabilityClick = {
+                        navController.navigate(Screen.AssetAvailability.createRoute(assetId))
+                    },
                     onEditClick = { navController.navigate(Screen.EditAsset.createRoute(assetId)) },
                     onDeactivated = {
                         // The list must stop showing the asset: refresh it for when the user goes back.
@@ -196,6 +208,32 @@ fun AppNavigation(
                             .getOrNull()?.savedStateHandle?.set(ASSETS_REFRESH_KEY, true)
                     }
                 )
+            }
+            composable(
+                route = Screen.AssetAvailability.route,
+                arguments = listOf(navArgument("assetId") { type = NavType.StringType })
+            ) {
+                // The route itself is guarded, not only the buttons that lead to it.
+                if (canViewReports) {
+                    val availabilityViewModel: AssetAvailabilityViewModel = hiltViewModel()
+                    AssetAvailabilityScreen(
+                        viewModel = availabilityViewModel,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navController.popBackStack() }
+                }
+            }
+            composable(Screen.AssetComparison.route) {
+                if (canViewReports) {
+                    val comparisonViewModel: AssetComparisonViewModel = hiltViewModel()
+                    AssetComparisonScreen(
+                        viewModel = comparisonViewModel,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navController.popBackStack() }
+                }
             }
             composable(
                 route = Screen.EditAsset.route,

@@ -46,7 +46,9 @@ fun AssetDetailScreen(
     onViewAlertsClick: (String) -> Unit,
     canManage: Boolean = false,
     onEditClick: () -> Unit = {},
-    onDeactivated: () -> Unit = {}
+    onDeactivated: () -> Unit = {},
+    canViewReports: Boolean = false,
+    onViewAvailabilityClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -148,6 +150,15 @@ fun AssetDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Text(text = stringResource(R.string.view_asset_alerts))
+                    }
+
+                    if (canViewReports) {
+                        TextButton(
+                            onClick = onViewAvailabilityClick,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            Text(text = stringResource(R.string.report_open_availability))
+                        }
                     }
 
                     if (canManage && asset.active) {

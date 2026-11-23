@@ -23,6 +23,10 @@ sealed class Screen(val route: String) {
     data object EditAsset : Screen("assets/{assetId}/edit") {
         fun createRoute(assetId: String) = "assets/$assetId/edit"
     }
+    data object AssetAvailability : Screen("assets/{assetId}/availability") {
+        fun createRoute(assetId: String) = "assets/$assetId/availability"
+    }
+    data object AssetComparison : Screen("assets_compare")
     data object CreateAsset : Screen("asset_create")
     data object Profile : Screen("profile")
 }

@@ -34,7 +34,7 @@ val SubtleTextColor = Color(0xFF64748B)
 
 /**
  * List card shared by assets, alerts and work orders: a side bar colored by status ([accent]),
- * a tinted icon box, a bold [title] with a soft [subtitle], an optional [trailing] chip and extra [content] below.
+ * (a null [onClick] makes it a plain, non-clickable card), a tinted icon box, a bold [title] with a soft [subtitle], an optional [trailing] chip and extra [content] below.
  */
 @Composable
 fun AccentCard(
@@ -42,7 +42,7 @@ fun AccentCard(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     trailing: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit = {}
@@ -50,7 +50,7 @@ fun AccentCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
