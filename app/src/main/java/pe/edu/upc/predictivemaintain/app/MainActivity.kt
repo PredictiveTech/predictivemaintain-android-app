@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
         // A rotation re-delivers the same intent; only a fresh launch carries a new notification tap.
-        if (savedInstanceState == null) appViewModel.onDeepLink(DeepLink.fromIntent(intent))
+        if (savedInstanceState == null) takeDeepLink(intent)
         setContent {
             PredictiveMaintainTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -59,7 +59,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        takeDeepLink(intent)
+    }
+
+    /**
+     * Hands the tapped notification's destination to the app state, where it waits for a session (and the
+     * login, if there is none). The URI is then removed from the intent: if it stayed, Navigation would open
+     * the screen by itself on a fresh start and skip the splash and the login.
+     */
+    private fun takeDeepLink(intent: android.content.Intent) {
         appViewModel.onDeepLink(DeepLink.fromIntent(intent))
+        intent.data = null
     }
 
     /** Android 13+: asks for POST_NOTIFICATIONS once, right after login. */

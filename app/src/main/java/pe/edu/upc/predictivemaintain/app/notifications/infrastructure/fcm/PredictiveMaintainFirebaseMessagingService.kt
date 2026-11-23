@@ -74,15 +74,17 @@ class PredictiveMaintainFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val deepLink = DeepLink.fromData(message.data)
+        val notificationId = System.currentTimeMillis().toInt()
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // Lets MainActivity open the screen the notification is about (US-19).
-            message.data[DeepLink.EXTRA_TYPE]?.let { putExtra(DeepLink.EXTRA_TYPE, it) }
+            // Cold start: a new task. Warm: the running activity is reused (singleTop) and gets onNewIntent,
+            // so the session and the screen the user was on are not thrown away.
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            deepLink?.let { data = it.uri }
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
-            // One request code per destination, so a subscription tap never reuses a generic PendingIntent.
-            DeepLink.fromType(message.data[DeepLink.EXTRA_TYPE])?.ordinal?.plus(1) ?: 0,
+            notificationId, // unique, so two notifications never share (and overwrite) one PendingIntent
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -98,7 +100,7 @@ class PredictiveMaintainFirebaseMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
     override fun onDestroy() {

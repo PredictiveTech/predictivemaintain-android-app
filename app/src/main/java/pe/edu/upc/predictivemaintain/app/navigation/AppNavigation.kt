@@ -26,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import androidx.navigation.navOptions
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
 import pe.edu.upc.predictivemaintain.app.iam.domain.valueobject.Role
 import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.LoginScreen
@@ -91,8 +93,13 @@ fun AppNavigation(
         if (session == null || currentRoute == null ||
             currentRoute == Screen.Splash.route || currentRoute == Screen.Login.route
         ) return@LaunchedEffect
-        link.targetRoute(canManageSubscription)?.let { route ->
-            navController.navigate(route) { launchSingleTop = true }
+        if (link.isAllowedFor(canManageSubscription)) {
+            try {
+                // Goes through the navDeepLink of the destination, on top of the normal start (Assets).
+                navController.navigate(link.uri, navOptions { launchSingleTop = true })
+            } catch (_: IllegalArgumentException) {
+                // No destination for this link: ignore it rather than crash on a bad push.
+            }
         }
         onDeepLinkHandled()
     }
@@ -209,7 +216,10 @@ fun AppNavigation(
                     } else null
                 )
             }
-            composable(Screen.Subscription.route) { backStackEntry ->
+            composable(
+                route = Screen.Subscription.route,
+                deepLinks = listOf(navDeepLink { uriPattern = "${DeepLink.SCHEME}://${DeepLink.HOST_SUBSCRIPTION}" })
+            ) { backStackEntry ->
                 // The route itself is guarded, not only the button that leads to it.
                 if (canManageSubscription) {
                     val subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
@@ -329,7 +339,8 @@ fun AppNavigation(
             }
             composable(
                 route = "alerts/{alertId}",
-                arguments = listOf(navArgument("alertId") { type = NavType.StringType })
+                arguments = listOf(navArgument("alertId") { type = NavType.StringType }),
+                deepLinks = listOf(navDeepLink { uriPattern = "${DeepLink.SCHEME}://${DeepLink.HOST_ALERTS}/{alertId}" })
             ) { backStackEntry ->
                 val alertId = backStackEntry.arguments?.getString("alertId") ?: ""
                 AlertDetailScreen(
@@ -360,7 +371,8 @@ fun AppNavigation(
             }
             composable(
                 route = "orders/{orderId}",
-                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType }),
+                deepLinks = listOf(navDeepLink { uriPattern = "${DeepLink.SCHEME}://${DeepLink.HOST_ORDERS}/{orderId}" })
             ) { backStackEntry ->
                 val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
                 val workOrderDetailViewModel: WorkOrderDetailViewModel = hiltViewModel()
