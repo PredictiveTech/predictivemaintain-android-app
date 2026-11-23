@@ -3,7 +3,10 @@ package pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.di
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
+import android.content.Context
+import androidx.room.Room
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.AlertRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.AssetRepository
@@ -17,7 +20,10 @@ import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.WorkO
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.PendingOperationQueue
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncRepository
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.implementation.SyncRepositoryImpl
-import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.PendingOperationDataStore
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.MaintenanceDatabase
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.PendingOperationDao
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.RoomPendingOperationQueue
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderDao
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncApiService
 import retrofit2.Retrofit
 import javax.inject.Singleton
@@ -53,10 +59,23 @@ abstract class MaintenanceModule {
     @Binds
     @Singleton
     abstract fun bindPendingOperationQueue(
-        impl: PendingOperationDataStore
+        impl: RoomPendingOperationQueue
     ): PendingOperationQueue
 
     companion object {
+        @Provides
+        @Singleton
+        fun provideMaintenanceDatabase(@ApplicationContext context: Context): MaintenanceDatabase =
+            Room.databaseBuilder(context, MaintenanceDatabase::class.java, MaintenanceDatabase.NAME).build()
+
+        @Provides
+        fun providePendingOperationDao(database: MaintenanceDatabase): PendingOperationDao =
+            database.pendingOperationDao()
+
+        @Provides
+        fun provideWorkOrderDao(database: MaintenanceDatabase): WorkOrderDao =
+            database.workOrderDao()
+
         @Provides
         @Singleton
         fun provideSyncApiService(retrofit: Retrofit): SyncApiService {

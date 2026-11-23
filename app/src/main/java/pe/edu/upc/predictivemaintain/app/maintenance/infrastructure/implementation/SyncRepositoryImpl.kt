@@ -7,7 +7,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.PendingOperatio
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncItemResult
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncOutcome
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncRepository
-import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderCache
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderLocalStore
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncApiService
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncOperationDto
 import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.remote.SyncRequestDto
@@ -17,7 +17,7 @@ import javax.inject.Inject
 class SyncRepositoryImpl @Inject constructor(
     private val apiService: SyncApiService,
     private val errorParser: ErrorParser,
-    private val cache: WorkOrderCache
+    private val cache: WorkOrderLocalStore
 ) : SyncRepository {
 
     override suspend fun synchronize(

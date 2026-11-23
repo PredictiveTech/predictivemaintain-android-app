@@ -19,7 +19,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.domain.repository.WorkOrder
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.PendingOperation
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.PendingOperationQueue
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.sync.SyncOperationType
-import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderCache
+import pe.edu.upc.predictivemaintain.app.maintenance.infrastructure.local.WorkOrderLocalStore
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.AlertId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.TechnicianId
 import pe.edu.upc.predictivemaintain.app.maintenance.domain.valueobject.WorkOrderId
@@ -39,7 +39,7 @@ class WorkOrderRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val apiService: WorkOrderApiService,
     private val errorParser: ErrorParser,
-    private val cache: WorkOrderCache,
+    private val cache: WorkOrderLocalStore,
     private val pendingQueue: PendingOperationQueue,
     private val sessionRepository: SessionRepository
 ) : WorkOrderRepository {
@@ -130,7 +130,7 @@ class WorkOrderRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun cached(result: Outcome<WorkOrder>): Outcome<WorkOrder> {
+    private suspend fun cached(result: Outcome<WorkOrder>): Outcome<WorkOrder> {
         if (result is Outcome.Success) cache.put(result.data)
         return result
     }
