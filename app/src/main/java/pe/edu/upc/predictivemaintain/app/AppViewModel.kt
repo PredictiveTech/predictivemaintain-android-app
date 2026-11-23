@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import android.util.Log
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import pe.edu.upc.predictivemaintain.app.core.network.SessionExpiredSignal
@@ -16,6 +18,7 @@ import pe.edu.upc.predictivemaintain.app.iam.application.usecase.LogoutUseCase
 import pe.edu.upc.predictivemaintain.app.iam.application.usecase.ObserveSessionUseCase
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.iam.domain.entity.AuthSession
+import pe.edu.upc.predictivemaintain.app.navigation.DeepLink
 import pe.edu.upc.predictivemaintain.app.notifications.application.usecase.RegisterDeviceTokenUseCase
 import javax.inject.Inject
 
@@ -33,6 +36,19 @@ class AppViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+
+    private val _pendingDeepLink = MutableStateFlow<DeepLink?>(null)
+
+    /** Where a tapped notification wants to go; kept until the navigation handled it (it may wait for login). */
+    val pendingDeepLink: StateFlow<DeepLink?> = _pendingDeepLink.asStateFlow()
+
+    fun onDeepLink(link: DeepLink?) {
+        if (link != null) _pendingDeepLink.value = link
+    }
+
+    fun onDeepLinkHandled() {
+        _pendingDeepLink.value = null
+    }
 
     init {
         // After a successful login (and when a stored session is restored): fetch the FCM token and send it.

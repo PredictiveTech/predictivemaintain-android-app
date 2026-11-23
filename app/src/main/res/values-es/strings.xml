@@ -244,4 +244,45 @@
     <string name="compare_col_alerts">Alertas</string>
     <string name="compare_col_critical">Crít.</string>
     <string name="compare_col_stops">Paradas</string>
+    <string name="subscription_title">Suscripción</string>
+    <string name="subscription_open">Suscripción y plan</string>
+    <string name="subscription_open_hint">Plan, activos en uso y fecha de renovación</string>
+    <string name="subscription_back">Volver</string>
+    <string name="subscription_current_plan">Plan actual</string>
+    <string name="subscription_assets_in_use">Activos en uso</string>
+    <string name="subscription_assets_of">%1$d de %2$d</string>
+    <string name="subscription_usage_percent">Usas el %1$s de tu plan</string>
+    <string name="subscription_available_assets">%1$d disponibles</string>
+    <string name="subscription_renewal_date">Fecha de renovación</string>
+    <string name="subscription_change_plan">Cambiar plan</string>
+    <string name="subscription_status_active">Activa</string>
+    <string name="subscription_status_suspended">Suspendida</string>
+    <string name="subscription_status_cancelled">Cancelada</string>
+    <string name="subscription_status_unknown">Desconocido</string>
+    <string name="subscription_expired_banner">Tu suscripción venció y el monitoreo está en pausa. Renuévala para reanudar el servicio.</string>
+    <string name="subscription_near_limit_banner">Estás cerca del límite de tu plan. Considera un plan mayor antes de registrar más activos.</string>
+    <string name="subscription_full_banner">Tu plan está lleno: no puedes registrar más activos. Cambia a un plan mayor para agregar más.</string>
+    <plurals name="subscription_days_remaining">
+        <item quantity="one">Queda %1$d día</item>
+        <item quantity="other">Quedan %1$d días</item>
+    </plurals>
+    <plurals name="subscription_expires_soon_banner">
+        <item quantity="one">Tu suscripción vence en %1$d día (%2$s). Renuévala para que el servicio no se interrumpa.</item>
+        <item quantity="other">Tu suscripción vence en %1$d días (%2$s). Renuévala para que el servicio no se interrumpa.</item>
+    </plurals>
+    <string name="plans_title">Cambiar plan</string>
+    <string name="plans_up_to_assets">Hasta %1$d activos</string>
+    <string name="plans_current_chip">Plan actual</string>
+    <plurals name="plans_deactivate_first">
+        <item quantity="one">Desactiva %1$d activo antes de pasar a este plan</item>
+        <item quantity="other">Desactiva %1$d activos antes de pasar a este plan</item>
+    </plurals>
+    <string name="plans_confirm_title">Cambiar plan</string>
+    <string name="plans_confirm_message">¿Pasar a %1$s (hasta %2$d activos, %3$s)? Se emitirá una factura.</string>
+    <string name="plans_confirm_action">Cambiar</string>
+    <plurals name="plans_too_small_error">
+        <item quantity="one">No puedes pasar a %1$s: permite %2$d activos y estás usando %3$d. Desactiva al menos %4$d activo primero.</item>
+        <item quantity="other">No puedes pasar a %1$s: permite %2$d activos y estás usando %3$d. Desactiva al menos %4$d activos primero.</item>
+    </plurals>
+    <string name="plans_empty">No hay planes disponibles.</string>
 </resources>

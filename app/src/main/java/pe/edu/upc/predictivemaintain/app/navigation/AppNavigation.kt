@@ -34,6 +34,10 @@ import pe.edu.upc.predictivemaintain.app.iam.presentation.ui.SplashScreen
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.LoginViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.ProfileViewModel
 import pe.edu.upc.predictivemaintain.app.iam.presentation.viewmodel.SplashViewModel
+import pe.edu.upc.predictivemaintain.app.subscription.presentation.ui.ChangePlanScreen
+import pe.edu.upc.predictivemaintain.app.subscription.presentation.ui.SubscriptionScreen
+import pe.edu.upc.predictivemaintain.app.subscription.presentation.viewmodel.ChangePlanViewModel
+import pe.edu.upc.predictivemaintain.app.subscription.presentation.viewmodel.SubscriptionViewModel
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertDetailScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AlertsScreen
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.ui.AssetAvailabilityScreen
@@ -54,6 +58,7 @@ import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.Work
 import pe.edu.upc.predictivemaintain.app.maintenance.presentation.viewmodel.WorkOrdersViewModel
 
 private const val ASSETS_REFRESH_KEY = "assets_refresh"
+private const val SUBSCRIPTION_REFRESH_KEY = "subscription_refresh"
 
 // Brand bottom bar. Contrast on the navy background: inactive #CBD5E1 ~12:1, active #0EA5E9 ~6:1,
 // active on its indicator pill ~5:1.
@@ -64,7 +69,9 @@ private val NavBarIndicator = Color(0xFF1E293B)
 
 @Composable
 fun AppNavigation(
-    session: AuthSession?
+    session: AuthSession?,
+    pendingDeepLink: DeepLink? = null,
+    onDeepLinkHandled: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -73,8 +80,22 @@ fun AppNavigation(
     val canCreateAssets = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
     // Reports (US-14, US-15, US-16) are for the Maintenance Manager, like asset creation.
     val canViewReports = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
+    // The subscription (US-17, US-18, US-19) is for the Maintenance Manager, like asset creation.
+    val canManageSubscription = session?.roles?.contains(Role.MAINTENANCE_MANAGER) == true
     val destinations = session?.let { destinationsFor(it.roles) } ?: emptyList()
     val showBottomBar = session != null && destinations.any { it.screen.route == currentRoute }
+
+    // A tapped notification waits here until there is a session and the splash/login are behind us.
+    LaunchedEffect(pendingDeepLink, session, currentRoute) {
+        val link = pendingDeepLink ?: return@LaunchedEffect
+        if (session == null || currentRoute == null ||
+            currentRoute == Screen.Splash.route || currentRoute == Screen.Login.route
+        ) return@LaunchedEffect
+        link.targetRoute(canManageSubscription)?.let { route ->
+            navController.navigate(route) { launchSingleTop = true }
+        }
+        onDeepLinkHandled()
+    }
 
     Scaffold(
         bottomBar = {
@@ -182,8 +203,44 @@ fun AppNavigation(
                         navController.navigate(Screen.Login.route) {
                             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                         }
-                    }
+                    },
+                    onSubscriptionClick = if (canManageSubscription) {
+                        { navController.navigate(Screen.Subscription.route) }
+                    } else null
                 )
+            }
+            composable(Screen.Subscription.route) { backStackEntry ->
+                // The route itself is guarded, not only the button that leads to it.
+                if (canManageSubscription) {
+                    val subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
+                    val savedStateHandle = backStackEntry.savedStateHandle
+                    val needsRefresh by savedStateHandle.getStateFlow(SUBSCRIPTION_REFRESH_KEY, false)
+                        .collectAsStateWithLifecycle()
+                    SubscriptionScreen(
+                        viewModel = subscriptionViewModel,
+                        onBackClick = { navController.popBackStack() },
+                        onChangePlanClick = { navController.navigate(Screen.ChangePlan.route) },
+                        needsRefresh = needsRefresh,
+                        onRefreshed = { savedStateHandle[SUBSCRIPTION_REFRESH_KEY] = false }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navController.popBackStack() }
+                }
+            }
+            composable(Screen.ChangePlan.route) {
+                if (canManageSubscription) {
+                    val changePlanViewModel: ChangePlanViewModel = hiltViewModel()
+                    ChangePlanScreen(
+                        viewModel = changePlanViewModel,
+                        onBackClick = { navController.popBackStack() },
+                        onChanged = {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(SUBSCRIPTION_REFRESH_KEY, true)
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
+                    LaunchedEffect(Unit) { navController.popBackStack() }
+                }
             }
             composable(
                 route = "assets/{assetId}",

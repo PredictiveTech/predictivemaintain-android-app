@@ -27,6 +27,8 @@ sealed class Screen(val route: String) {
         fun createRoute(assetId: String) = "assets/$assetId/availability"
     }
     data object AssetComparison : Screen("assets_compare")
+    data object Subscription : Screen("subscription")
+    data object ChangePlan : Screen("subscription/plans")
     data object CreateAsset : Screen("asset_create")
     data object Profile : Screen("profile")
 }

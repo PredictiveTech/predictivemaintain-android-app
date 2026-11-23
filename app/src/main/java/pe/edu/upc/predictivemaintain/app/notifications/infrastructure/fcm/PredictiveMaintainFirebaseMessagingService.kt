@@ -19,6 +19,7 @@ import pe.edu.upc.predictivemaintain.app.MainActivity
 import pe.edu.upc.predictivemaintain.app.R
 import pe.edu.upc.predictivemaintain.app.core.error.Outcome
 import pe.edu.upc.predictivemaintain.app.iam.infrastructure.local.SessionDataStore
+import pe.edu.upc.predictivemaintain.app.navigation.DeepLink
 import pe.edu.upc.predictivemaintain.app.notifications.application.usecase.RegisterDeviceTokenUseCase
 import javax.inject.Inject
 
@@ -75,10 +76,13 @@ class PredictiveMaintainFirebaseMessagingService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Lets MainActivity open the screen the notification is about (US-19).
+            message.data[DeepLink.EXTRA_TYPE]?.let { putExtra(DeepLink.EXTRA_TYPE, it) }
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            // One request code per destination, so a subscription tap never reuses a generic PendingIntent.
+            DeepLink.fromType(message.data[DeepLink.EXTRA_TYPE])?.ordinal?.plus(1) ?: 0,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )

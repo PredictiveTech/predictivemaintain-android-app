@@ -244,4 +244,45 @@
     <string name="compare_col_alerts">Alerts</string>
     <string name="compare_col_critical">Crit.</string>
     <string name="compare_col_stops">Stops</string>
+    <string name="subscription_title">Subscription</string>
+    <string name="subscription_open">Subscription and plan</string>
+    <string name="subscription_open_hint">Plan, assets in use and renewal date</string>
+    <string name="subscription_back">Back</string>
+    <string name="subscription_current_plan">Current plan</string>
+    <string name="subscription_assets_in_use">Assets in use</string>
+    <string name="subscription_assets_of">%1$d of %2$d</string>
+    <string name="subscription_usage_percent">%1$s of your plan is in use</string>
+    <string name="subscription_available_assets">%1$d available</string>
+    <string name="subscription_renewal_date">Renewal date</string>
+    <string name="subscription_change_plan">Change plan</string>
+    <string name="subscription_status_active">Active</string>
+    <string name="subscription_status_suspended">Suspended</string>
+    <string name="subscription_status_cancelled">Cancelled</string>
+    <string name="subscription_status_unknown">Unknown</string>
+    <string name="subscription_expired_banner">Your subscription has expired and monitoring is paused. Renew it to resume service.</string>
+    <string name="subscription_near_limit_banner">You are close to your plan limit. Consider a bigger plan before registering more assets.</string>
+    <string name="subscription_full_banner">Your plan is full: you cannot register more assets. Change to a bigger plan to add more.</string>
+    <plurals name="subscription_days_remaining">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="subscription_expires_soon_banner">
+        <item quantity="one">Your subscription expires in %1$d day (%2$s). Renew it so service is not interrupted.</item>
+        <item quantity="other">Your subscription expires in %1$d days (%2$s). Renew it so service is not interrupted.</item>
+    </plurals>
+    <string name="plans_title">Change plan</string>
+    <string name="plans_up_to_assets">Up to %1$d assets</string>
+    <string name="plans_current_chip">Current plan</string>
+    <plurals name="plans_deactivate_first">
+        <item quantity="one">Deactivate %1$d asset first to move to this plan</item>
+        <item quantity="other">Deactivate %1$d assets first to move to this plan</item>
+    </plurals>
+    <string name="plans_confirm_title">Change plan</string>
+    <string name="plans_confirm_message">Move to %1$s (up to %2$d assets, %3$s)? An invoice will be issued.</string>
+    <string name="plans_confirm_action">Change</string>
+    <plurals name="plans_too_small_error">
+        <item quantity="one">You cannot move to %1$s: it allows %2$d assets and you are using %3$d. Deactivate at least %4$d asset first.</item>
+        <item quantity="other">You cannot move to %1$s: it allows %2$d assets and you are using %3$d. Deactivate at least %4$d assets first.</item>
+    </plurals>
+    <string name="plans_empty">There are no plans available.</string>
 </resources>

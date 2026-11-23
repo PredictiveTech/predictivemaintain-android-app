@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import pe.edu.upc.predictivemaintain.app.navigation.AppNavigation
+import pe.edu.upc.predictivemaintain.app.navigation.DeepLink
 import pe.edu.upc.predictivemaintain.app.ui.theme.PredictiveMaintainTheme
 
 @AndroidEntryPoint
@@ -37,15 +38,28 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
+        // A rotation re-delivers the same intent; only a fresh launch carries a new notification tap.
+        if (savedInstanceState == null) appViewModel.onDeepLink(DeepLink.fromIntent(intent))
         setContent {
             PredictiveMaintainTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val session by appViewModel.session.collectAsStateWithLifecycle()
                     NotificationPermissionRequest(isLoggedIn = session != null)
-                    AppNavigation(session = session)
+                    val pendingDeepLink by appViewModel.pendingDeepLink.collectAsStateWithLifecycle()
+                    AppNavigation(
+                        session = session,
+                        pendingDeepLink = pendingDeepLink,
+                        onDeepLinkHandled = appViewModel::onDeepLinkHandled
+                    )
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        appViewModel.onDeepLink(DeepLink.fromIntent(intent))
     }
 
     /** Android 13+: asks for POST_NOTIFICATIONS once, right after login. */
